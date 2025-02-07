@@ -2,6 +2,8 @@ import { cn } from "@/src/lib/utils";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import Link from "next/link";
+import { ROUTES } from "@/src/shared/constants/ROUTES";
 
 export const LoginScreen: React.FC = () => {
   return (
@@ -49,9 +51,12 @@ export const LoginScreen: React.FC = () => {
       </div>
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
-        <a href="#" className="underline underline-offset-4">
+        <Link
+          href={ROUTES.AUTH.REGISTER}
+          className="underline underline-offset-4"
+        >
           Sign up
-        </a>
+        </Link>
       </div>
     </form>
   );

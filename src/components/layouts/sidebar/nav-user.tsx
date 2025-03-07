@@ -29,6 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/src/components/ui/sidebar";
+import useSession from "@/src/shared/api/use-session";
 
 export function NavUser({
   user,
@@ -40,10 +41,9 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const session = useSession(true);
 
-  const handleLogout = () => {
-    console.log("@Logout");
-  };
+  const handleLogout = () => session.loggedIn && session.signOut();
 
   return (
     <SidebarMenu>

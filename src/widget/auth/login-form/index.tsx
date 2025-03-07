@@ -10,11 +10,14 @@ import {
   Form,
 } from "@/src/components/ui/form";
 import { Input } from "@/src/components/ui/input";
+import { AuthenticationAPI } from "@/src/entities/authentication";
 import { cn } from "@/src/lib/utils";
 import { ROUTES } from "@/src/shared/constants/ROUTES";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ProfileType } from "@kascad-app/shared-types";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const loginFormSchema = z.object({
@@ -31,8 +34,16 @@ export const LoginFormWidget: React.FC = () => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof loginFormSchema>) {
+  async function onSubmit(values: z.infer<typeof loginFormSchema>) {
     console.log(values);
+    const response = await AuthenticationAPI.login({
+      email: values.email,
+      password: values.password,
+      type: ProfileType.SPONSOR,
+    });
+
+    if (!response.success) return toast.error(response.message);
+    else return;
   }
 
   return (

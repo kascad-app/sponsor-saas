@@ -31,8 +31,9 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-interface DataTableProps<TData, TValue> {
+interface DataTableProps<TData extends { id: string | number }, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pageSize?: number;
@@ -40,7 +41,7 @@ interface DataTableProps<TData, TValue> {
   showPageSizeOptions?: boolean;
 }
 
-export const DataTableWidget = <TData, TValue>({
+export const DataTableWidget = <TData extends { id: string | number }, TValue>({
   columns,
   data,
   pageSize = 10,
@@ -65,6 +66,7 @@ export const DataTableWidget = <TData, TValue>({
     pageCount: Math.ceil(data.length / pagination.pageSize),
   });
 
+  const router = useRouter();
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-md border">
@@ -93,6 +95,9 @@ export const DataTableWidget = <TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={() => {
+                    router.push(`/details-rider/${row.original.id}`);
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

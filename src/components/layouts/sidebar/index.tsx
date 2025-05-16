@@ -15,8 +15,8 @@ import { NAVIGATION } from "@/src/shared/constants/NAVIGATION";
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
+    name: "testUser",
+    email: "email@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
 };

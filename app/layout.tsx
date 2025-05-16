@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { FavoritesProvider } from "@/src/contexts/favorites-context";
 import { ThemeProvider } from "@/src/components/layouts/theme-provider";
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -34,7 +34,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <FavoritesProvider>{children}</FavoritesProvider>
         </ThemeProvider>
       </body>
     </html>

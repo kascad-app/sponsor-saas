@@ -8,6 +8,6 @@ export const ROUTES = {
 
   APP: {
     DASHBOARD: "/dashboard",
-    search: "/SEARCH",
+    SEARCH: "/search",
   },
 };

@@ -1,5 +1,3 @@
-import { APIResponse } from "@kascad-app/shared-types";
-
 type FetchOptions = Omit<RequestInit, "body"> & {
   data?: unknown;
 };
@@ -7,7 +5,7 @@ type FetchOptions = Omit<RequestInit, "body"> & {
 const request = async <TData>(
   url: string,
   options?: FetchOptions
-): Promise<APIResponse<TData>> => {
+): Promise<TData> => {
   const headers = new Headers({
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -26,12 +24,15 @@ const request = async <TData>(
     `${process.env.NEXT_PUBLIC_API_PATH}${url}`,
     config
   );
-  const data: APIResponse<TData> = await response.json();
 
-  if (!data.success) {
-    return data;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || `HTTP error! status: ${response.status}`
+    );
   }
 
+  const data: TData = await response.json();
   return data;
 };
 

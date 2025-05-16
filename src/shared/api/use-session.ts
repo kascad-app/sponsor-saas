@@ -2,60 +2,56 @@
 
 import { useRouter } from "next/navigation";
 import React from "react";
-import Cookies from "js-cookie";
-import { useAPI } from "./use-api";
 
-import { Sponsor } from "@kascad-app/shared-types";
 import { ROUTES } from "../constants/ROUTES";
-import {
-  AuthenticationAPI,
-  AuthenticationTypes,
-} from "@/src/entities/authentication";
+import { AuthenticationTypes } from "@/src/entities/authentication";
+import { useMe } from "@/src/entities/authentication/authentication.hooks";
+import { Sponsor } from "@kascad-app/shared-types";
 
-const useSession = (mustAuth = false): AuthenticationTypes.Session => {
-  const loggedIn = Cookies.get(
-    process.env.NEXT_PUBLIC_LOGGED_IN_COOKIE_NAME ?? "logged-in"
-  );
+const useSession = (mustAuth = true): AuthenticationTypes.Session => {
   const router = useRouter();
-  const {
-    data: user,
-    mutate,
-    isLoading,
-    isValidating,
-  } = useAPI<Sponsor>(loggedIn ? "/auth/me" : null, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-  });
-
-  const signOut = React.useCallback(async () => {
-    await AuthenticationAPI.logout();
-    window.location.href = ROUTES.HOMEPAGE;
-  }, []);
+  const { data: user, mutate, isLoading, isValidating } = useMe();
 
   const redirectToLogin = React.useCallback(() => {
     router.push(ROUTES.AUTH.LOGIN);
-  }, []);
+  }, [router]);
 
   React.useEffect(() => {
-    if (mustAuth && !user && !isLoading) {
+    console.log("user", user);
+    console.log("isLoading", isLoading);
+    console.log("mustAuth", mustAuth);
+    if (mustAuth && !isAuthenticated(user) && !isLoading) {
       redirectToLogin();
     }
-  }, [mustAuth, user, isLoading]);
+  }, [mustAuth, user, isLoading, redirectToLogin]);
+
+  function isAuthenticated(user: unknown): user is Sponsor {
+    return (
+      !!user &&
+      typeof user === "object" &&
+      !("statusCode" in user) &&
+      !(
+        "message" in user &&
+        (user as { message?: string }).message === "Unauthorized"
+      )
+    );
+  }
+
+  if (isAuthenticated(user)) {
+    return {
+      loggedIn: true,
+      user,
+      validating: isValidating,
+      mutate,
+      loading: isLoading,
+    };
+  }
 
   return {
+    loggedIn: false,
+    user: undefined,
     mutate,
     loading: isLoading,
-    ...(user
-      ? {
-          loggedIn: true,
-          user: user as unknown as Sponsor,
-          validating: isValidating,
-          signOut,
-        }
-      : {
-          loggedIn: false,
-          user,
-        }),
   };
 };
 

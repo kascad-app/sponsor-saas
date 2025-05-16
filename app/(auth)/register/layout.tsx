@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "Kascad Sponsor",
+  title: "Create your account - Kascad",
   description: "Find the best rider for your marketing campaign",
 };
 

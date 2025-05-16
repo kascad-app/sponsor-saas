@@ -18,51 +18,42 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
-import { useSession } from "@/src/shared/api";
-import { useEffect } from "react";
-import { useLogin } from "@/src/entities/authentication/authentication.hooks";
+import { useRegister } from "@/src/entities/authentication/authentication.hooks";
 import { Loader2 } from "lucide-react";
 
-const loginFormSchema = z.object({
+const registerFormSchema = z.object({
   email: z.string().email(),
-  password: z.string(),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  companyName: z.string().min(2, "Company name must be at least 2 characters"),
 });
 
-export const LoginFormWidget: React.FC = () => {
-  const form = useForm<z.infer<typeof loginFormSchema>>({
-    resolver: zodResolver(loginFormSchema),
+export const RegisterFormWidget: React.FC = () => {
+  const form = useForm<z.infer<typeof registerFormSchema>>({
+    resolver: zodResolver(registerFormSchema),
     defaultValues: {
       email: "",
       password: "",
+      companyName: "",
     },
   });
 
   const router = useRouter();
-  const loginMutation = useLogin();
-  const session = useSession();
+  const registerMutation = useRegister();
 
-  useEffect(() => {
-    if (session.loggedIn) {
-      router.push(ROUTES.APP.DASHBOARD);
-    }
-  }, [session.loggedIn, router]);
-
-  async function onSubmit(values: z.infer<typeof loginFormSchema>) {
-    loginMutation
+  async function onSubmit(values: z.infer<typeof registerFormSchema>) {
+    registerMutation
       .trigger({
         email: values.email,
         password: values.password,
+        companyName: values.companyName,
       })
-      .then(async (res) => {
-        console.log(res);
-        toast.success("Login successful");
-        await session.mutate();
+      .then(() => {
+        toast.success("Registration successful");
         router.push(ROUTES.APP.DASHBOARD);
       })
       .catch((err) => {
         console.error(err);
-        toast.error("Login failed");
+        toast.error("Registration failed");
       });
   }
 
@@ -73,9 +64,9 @@ export const LoginFormWidget: React.FC = () => {
         className={cn("flex flex-col gap-6")}
       >
         <div className="flex flex-col items-center gap-2 text-center">
-          <h2 className="text-2xl font-bold">Login to your account</h2>
+          <h2 className="text-2xl font-bold">Create your account</h2>
           <p className="text-balance text-sm text-muted-foreground">
-            Enter your email below to login to your account
+            Enter your details below to create your sponsor account
           </p>
         </div>
 
@@ -108,32 +99,46 @@ export const LoginFormWidget: React.FC = () => {
             )}
           />
 
-          {loginMutation.error && (
+          <FormField
+            control={form.control}
+            name="companyName"
+            render={({ field }) => (
+              <FormItem className="grid gap-2">
+                <FormLabel>Company Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="company name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {registerMutation.error && (
             <div className="text-sm text-red-500 text-center">
-              {loginMutation.error.message ||
-                "An error occurred during login, please contact support"}
+              {registerMutation.error.message ||
+                "An error occurred during registration, please contact support"}
             </div>
           )}
 
           <Button
             type="submit"
             className="w-full"
-            disabled={loginMutation.isMutating}
+            disabled={registerMutation.isMutating}
           >
-            {loginMutation.isMutating ? (
+            {registerMutation.isMutating ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              "Login"
+              "Register"
             )}
           </Button>
         </div>
         <div className="text-center text-sm">
-          Don&apos;t have an account?{" "}
+          Already have an account?{" "}
           <Link
-            href={ROUTES.AUTH.REGISTER}
+            href={ROUTES.AUTH.LOGIN}
             className="underline underline-offset-4"
           >
-            Sign up
+            Sign in
           </Link>
         </div>
       </form>

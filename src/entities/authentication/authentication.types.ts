@@ -1,8 +1,8 @@
 import { KeyedMutator } from "swr";
 
-import { APIResponse, Sponsor } from "@kascad-app/shared-types";
+import { Sponsor } from "@kascad-app/shared-types";
 export type Session = {
-  mutate: KeyedMutator<APIResponse<Sponsor>>;
+  mutate: KeyedMutator<Sponsor>;
 } & (SignedOutSession | SignedInSession);
 
 export type SignedInSession = {
@@ -10,7 +10,6 @@ export type SignedInSession = {
   user: Sponsor;
   loading: boolean;
   validating: boolean;
-  signOut: () => Promise<void>;
 };
 
 export type SignedOutSession = {

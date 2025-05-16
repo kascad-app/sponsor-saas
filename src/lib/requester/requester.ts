@@ -1,16 +1,9 @@
-import { APIResponse, APIResponsePromise } from "@kascad-app/shared-types";
 import request, { ApiRequestConfig } from "./request";
-
-// const createAuthHeaders = (jwtToken: string): HeadersInit => ({
-//   Authorization: `${
-//     process.env.NEXT_PUBLIC_AUTH_PREFIX || "Bearer"
-//   } ${jwtToken}`,
-// });
 
 type BaseRequest = <TData>(
   url: string,
   options?: ApiRequestConfig
-) => APIResponsePromise<TData>;
+) => Promise<TData>;
 
 type RequestResponse = {
   get: BaseRequest;
@@ -30,7 +23,7 @@ const requester = (auth = true): RequestResponse => {
     async <TData = unknown>(
       url: string,
       options?: ApiRequestConfig
-    ): Promise<APIResponse<TData>> => {
+    ): Promise<TData> => {
       return request<TData>(url, { ...baseOptions, ...options, method });
     };
 

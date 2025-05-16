@@ -1,5 +1,5 @@
-import { RidersDashboard } from "@/src/components/screens/dashboard-screen";
+import { FavoritesScreen } from "@/src/components/screens/favorites-screen";
 
 export default function Favorites() {
-  return <RidersDashboard />;
+  return <FavoritesScreen />;
 }

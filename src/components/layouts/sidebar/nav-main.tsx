@@ -1,6 +1,8 @@
 "use client";
 
 import { type LucideIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { cn } from "@/src/lib/utils";
 
 import {
   SidebarGroup,
@@ -21,20 +23,32 @@ export function NavMain({
     icon: LucideIcon;
   }[];
 }) {
+  const pathname = usePathname();
+
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild>
-              <Link href={item.url}>
-                <item.icon />
-                <span>{item.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
+        {items.map((item) => {
+          const isActive = pathname === item.url;
+          return (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton
+                asChild
+                className={cn(
+                  "transition-colors",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  isActive && "bg-accent text-accent-foreground font-medium",
+                )}
+              >
+                <Link href={item.url}>
+                  <item.icon className={cn(isActive && "text-primary")} />
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );

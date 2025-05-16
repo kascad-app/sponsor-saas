@@ -22,6 +22,7 @@ import {
 import Image from "next/image";
 import { useFavorites } from "@/src/contexts/favorites-context";
 import { competitions } from "@/src/lib/competition.lib";
+
 export default function DetailRiderScreen({ rider }: { rider?: Rider }) {
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
@@ -99,7 +100,9 @@ export default function DetailRiderScreen({ rider }: { rider?: Rider }) {
                   >
                     <Heart
                       className={`h-4 w-4 ${
-                        isFavorite(rider.id) ? "text-red-500" : "text-gray-500"
+                        isFavorite(rider.id)
+                          ? "fill-red-500 border-red-500"
+                          : ""
                       }`}
                     />
                   </Button>

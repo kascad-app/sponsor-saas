@@ -8,6 +8,7 @@ import {
   LogOut,
   Sparkles,
 } from "lucide-react";
+import { user } from "@/src/config/user";
 
 import {
   Avatar,
@@ -30,15 +31,7 @@ import {
   useSidebar,
 } from "@/src/components/ui/sidebar";
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
-}) {
+export function NavUser() {
   const { isMobile } = useSidebar();
   const router = useRouter();
   const handleLogout = () => {

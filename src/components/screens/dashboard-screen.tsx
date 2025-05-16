@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Check, ChevronDown, Filter } from "lucide-react";
-import Image from "next/image";
+import { Check, ChevronDown, Filter, Search } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import {
@@ -25,8 +24,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/src/components/ui/popover";
+import { Input } from "@/src/components/ui/input";
 import { DataTableWidget } from "@/src/widgets/data-table-sponsor";
 import { Rider, riders } from "@/src/lib/dashboard.lib";
+import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 
 // Define the columns for the DataTable
 const columns: ColumnDef<Rider>[] = [
@@ -34,15 +35,16 @@ const columns: ColumnDef<Rider>[] = [
     accessorKey: "photo",
     header: "",
     cell: ({ row }) => (
-      <div className="w-10 h-10 rounded-full overflow-hidden">
-        <Image
-          src={row.original.photo || "/placeholder.svg"}
-          alt={row.original.name}
-          width={40}
-          height={40}
-          className="object-cover"
-        />
-      </div>
+      <Avatar className="w-10 h-10">
+        <AvatarFallback>
+          {row.original.name
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .substring(0, 2)}
+        </AvatarFallback>
+      </Avatar>
     ),
   },
   {
@@ -126,13 +128,22 @@ export const RidersDashboard = () => {
   });
 
   return (
-    <div className="grid min-h-screen w-full">
+    <div className="grid min-h-screen w-full relative">
       <div className="flex flex-col">
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold md:text-2xl">
               Tous les riders
             </h1>
+            <div className="relative w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher un rider..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
+            </div>
           </div>
 
           <div className="flex flex-col gap-4 md:flex-row md:items-end">

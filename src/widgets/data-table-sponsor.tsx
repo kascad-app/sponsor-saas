@@ -95,6 +95,9 @@ export const DataTableWidget = <TData extends { id: string | number }, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  style={{
+                    cursor: "pointer",
+                  }}
                   onClick={() => {
                     router.push(`/details-rider/${row.original.id}`);
                   }}

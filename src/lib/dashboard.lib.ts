@@ -6,6 +6,15 @@ export type Rider = {
   status: "active" | "inactive";
   level: "beginner" | "intermediate" | "advanced" | "professional";
   joinedDate: string;
+  age?: number;
+  country?: string;
+  city?: string;
+  description?: string;
+  socialMedia?: {
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+  };
 };
 
 export const riders: Rider[] = [
@@ -17,6 +26,14 @@ export const riders: Rider[] = [
     status: "active",
     level: "professional",
     joinedDate: "2023-01-15",
+    age: 28,
+    country: "USA",
+    city: "Boulder",
+    description: "Professional mountain biker with 5 world championship titles",
+    socialMedia: {
+      instagram: "@alexjmtb",
+      twitter: "@alexjohnsonmtb",
+    },
   },
   {
     id: "2",
@@ -26,6 +43,14 @@ export const riders: Rider[] = [
     status: "active",
     level: "advanced",
     joinedDate: "2023-02-20",
+    age: 24,
+    country: "Canada",
+    city: "Toronto",
+    description: "Rising star in the BMX scene, known for technical tricks",
+    socialMedia: {
+      instagram: "@sarahbmx",
+      facebook: "sarahmillerbmx",
+    },
   },
   {
     id: "3",
@@ -35,6 +60,13 @@ export const riders: Rider[] = [
     status: "inactive",
     level: "intermediate",
     joinedDate: "2023-03-10",
+    age: 22,
+    country: "China",
+    city: "Shanghai",
+    description: "Urban BMX rider focusing on street style",
+    socialMedia: {
+      instagram: "@michaelchenbmx",
+    },
   },
   {
     id: "4",
@@ -44,6 +76,15 @@ export const riders: Rider[] = [
     status: "active",
     level: "advanced",
     joinedDate: "2023-04-05",
+    age: 25,
+    country: "UK",
+    city: "London",
+    description: "Specializes in halfpipe and park skateboarding",
+    socialMedia: {
+      instagram: "@emmaskates",
+      twitter: "@emmawilsonskate",
+      facebook: "emmawilsonskate",
+    },
   },
   {
     id: "5",
@@ -53,6 +94,14 @@ export const riders: Rider[] = [
     status: "active",
     level: "professional",
     joinedDate: "2023-05-12",
+    age: 30,
+    country: "Spain",
+    city: "Barcelona",
+    description: "Street skateboarding legend with multiple X Games medals",
+    socialMedia: {
+      instagram: "@jamesrodskate",
+      twitter: "@jrodriguez",
+    },
   },
   {
     id: "6",
@@ -62,5 +111,12 @@ export const riders: Rider[] = [
     status: "inactive",
     level: "beginner",
     joinedDate: "2023-06-18",
+    age: 19,
+    country: "Australia",
+    city: "Sydney",
+    description: "New to BMX but showing great potential in ramp riding",
+    socialMedia: {
+      instagram: "@oliviabmxer",
+    },
   },
 ];

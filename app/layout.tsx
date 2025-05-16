@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { FavoritesProvider } from "@/src/contexts/favorites-context";
 import { ThemeProvider } from "@/src/components/layouts/theme-provider";
 import { Toaster } from "@/src/components/ui/sonner";
 
@@ -35,8 +36,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-
+          <FavoritesProvider>{children}</FavoritesProvider>
           <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>

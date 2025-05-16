@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Rider, riders } from "@/src/lib/dashboard.lib";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
@@ -70,8 +69,8 @@ const RiderCard = ({ rider }: { rider: Rider }) => {
                 <Badge
                   className={
                     rider.status === "active"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
+                      ? "bg-green-100 text-green-800 hover:bg-green-100"
+                      : "bg-red-100 text-red-800 hover:bg-red-100"
                   }
                 >
                   {rider.status === "active" ? "Actif" : "Inactif"}

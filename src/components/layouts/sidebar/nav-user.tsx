@@ -1,5 +1,5 @@
 "use client";
-
+import { useRouter } from "next/navigation";
 import {
   BadgeCheck,
   Bell,
@@ -40,7 +40,7 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
-
+  const router = useRouter();
   const handleLogout = () => {
     console.log("@Logout");
   };
@@ -92,7 +92,7 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/account")} className="cursor-pointer">
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>

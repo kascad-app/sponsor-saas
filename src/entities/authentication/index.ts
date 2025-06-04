@@ -1,2 +1,2 @@
-export * as AuthenticationAPI from "./authentication.api";
+export * as AuthenticationHooks from "./authentication.hooks";
 export * as AuthenticationTypes from "./authentication.types";

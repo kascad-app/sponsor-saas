@@ -26,8 +26,7 @@ ENV GITHUB_TOKEN=$GITHUB_TOKEN
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# ⬇️ Inclure le .env pour que Next.js y ait accès pendant le build
-COPY .env .env
+ COPY .env .env
 
 RUN pnpm build
 
@@ -40,7 +39,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
-COPY --from=builder /app/next.config.js ./  # Tu peux commenter cette ligne si pas utile
+COPY --from=builder /app/next.config.js ./  
 
 COPY .env .env
 

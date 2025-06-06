@@ -91,8 +91,8 @@ importers:
         specifier: ^3
         version: 3.2.0
       '@kascad-app/shared-types':
-        specifier: ^1.3.4
-        version: 1.3.4
+        specifier: ^1.4.6
+        version: 1.4.6
       '@types/js-cookie':
         specifier: ^3.0.6
         version: 3.0.6
@@ -335,8 +335,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@kascad-app/shared-types@1.3.4':
-    resolution: {integrity: sha512-eaJ8S1vw8tDjj5/bboOACkyweoPbmRL8k+x9IAznjheA+WpfhqDtByconUQPTCo7PgEtz7sKMGlv6ZrW5kNLmQ==, tarball: https://npm.pkg.github.com/download/@kascad-app/shared-types/1.3.4/d74580ca238fd5f7eec0fcd30855a4846b592eac}
+  '@kascad-app/shared-types@1.4.6':
+    resolution: {integrity: sha512-0UG1J5wza4nRW3DUiLGEI6qgG0BJeIjHoyQSGQrRE97QZbJpfPDvRQjA7CWjvpFn3Vf+IzKvWvyM4R36CeAgog==, tarball: https://npm.pkg.github.com/download/@kascad-app/shared-types/1.4.6/3cc922ca3ef56c545c35a4754d0f7e3fd0283383}
 
   '@next/env@15.1.0':
     resolution: {integrity: sha512-UcCO481cROsqJuszPPXJnb7GGuLq617ve4xuAyyNG4VSSocJNtMU5Fsx+Lp6mlN8c7W58aZLc5y6D/2xNmaK+w==}
@@ -2656,7 +2656,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@kascad-app/shared-types@1.3.4': {}
+  '@kascad-app/shared-types@1.4.6': {}
 
   '@next/env@15.1.0': {}
 

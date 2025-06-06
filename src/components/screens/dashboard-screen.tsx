@@ -3,7 +3,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Search } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
-import { Button } from "@/src/components/ui/button";
 import {
   Card,
   CardContent,
@@ -15,10 +14,12 @@ import { DataTableWidget } from "@/src/widgets/data-table-sponsor";
 import { Rider, riders } from "@/src/lib/dashboard.lib";
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import {
-  Filters,
+  FilterDrawer,
   useFilters,
+  genres,
   sports,
-  statuses,
+  countries,
+  languages,
 } from "@/src/components/utils/filters-datatable";
 
 // Define the columns for the DataTable
@@ -99,26 +100,31 @@ export const RidersDashboard = () => {
   const {
     searchQuery,
     setSearchQuery,
+    selectedGenre,
     selectedSport,
-    setSelectedSport,
-    selectedStatus,
-    setSelectedStatus,
+    selectedCountry,
+    selectedLanguage,
+    tempGenre,
+    setTempGenre,
+    tempSport,
+    setTempSport,
+    tempCountry,
+    setTempCountry,
+    tempLanguage,
+    setTempLanguage,
     hasAnyFilter,
     resetFilters,
+    applyFilters,
   } = useFilters();
-  // Filter the riders based on search query and selected filters
+
   const filteredRiders = riders.filter((rider) => {
     const matchesSearch = rider.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesSport =
-      selectedSport === "All Sports" || rider.sport === selectedSport;
-    const matchesStatus =
-      selectedStatus === "All Statuses" ||
-      (selectedStatus === "Active" && rider.status === "active") ||
-      (selectedStatus === "Inactive" && rider.status === "inactive");
+      selectedSport === "Tous les sports" || rider.sport === selectedSport;
 
-    return matchesSearch && matchesSport && matchesStatus;
+    return matchesSearch && matchesSport;
   });
 
   return (
@@ -157,34 +163,25 @@ export const RidersDashboard = () => {
             </Card>
 
             <div className="flex flex-wrap gap-2 justify-end w-full">
-              <Filters
+              <FilterDrawer
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
+                selectedGenre={tempGenre}
+                setSelectedGenre={setTempGenre}
                 selectedSport={selectedSport}
-                setSelectedSport={setSelectedSport}
-                selectedStatus={selectedStatus}
-                setSelectedStatus={setSelectedStatus}
-                showSearch={false}
+                setSelectedSport={setTempSport}
+                selectedCountry={selectedCountry}
+                setSelectedCountry={setTempCountry}
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setTempLanguage}
+                genreOptions={genres}
                 sportOptions={sports}
-                statusOptions={statuses}
+                countryOptions={countries}
+                languageOptions={languages}
                 hasAnyFilter={hasAnyFilter}
                 resetFilters={resetFilters}
+                applyFilters={applyFilters}
               />
-
-              {(selectedSport !== "All Sports" ||
-                selectedStatus !== "All Statuses" ||
-                searchQuery) && (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setSelectedSport("All Sports");
-                    setSelectedStatus("All Statuses");
-                    setSearchQuery("");
-                  }}
-                >
-                  Reset Filters
-                </Button>
-              )}
             </div>
           </div>
 

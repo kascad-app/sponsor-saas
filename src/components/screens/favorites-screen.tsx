@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Search } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
 import { Input } from "@/src/components/ui/input";
-import { DataTableWidget } from "@/src/widgets/data-table-sponsor";
+import { DataTableWidget } from "@/src/widget/data-table/data-table-sponsor";
 import { Rider, riders } from "@/src/lib/dashboard.lib";
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import { useFavorites } from "@/src/contexts/favorites-context";

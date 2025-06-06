@@ -18,11 +18,10 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
-import { useSession } from "@/src/shared/api";
-import { useEffect } from "react";
 import { useLogin } from "@/src/entities/authentication/authentication.hooks";
 import { Loader2 } from "lucide-react";
+import { LoadingScreen } from "@/src/components/ui/loading-screen";
+import { useState } from "react";
 
 const loginFormSchema = z.object({
   email: z.string().email(),
@@ -30,6 +29,8 @@ const loginFormSchema = z.object({
 });
 
 export const LoginFormWidget: React.FC = () => {
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
   const form = useForm<z.infer<typeof loginFormSchema>>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
@@ -40,13 +41,6 @@ export const LoginFormWidget: React.FC = () => {
 
   const router = useRouter();
   const loginMutation = useLogin();
-  const session = useSession();
-
-  useEffect(() => {
-    if (session.loggedIn) {
-      router.push(ROUTES.APP.DASHBOARD);
-    }
-  }, [session.loggedIn, router]);
 
   async function onSubmit(values: z.infer<typeof loginFormSchema>) {
     loginMutation
@@ -56,14 +50,19 @@ export const LoginFormWidget: React.FC = () => {
       })
       .then(async (res) => {
         console.log(res);
-        toast.success("Login successful");
-        await session.mutate();
+        toast.success("La connexion a été réussie");
+        setIsRedirecting(true);
         router.push(ROUTES.APP.DASHBOARD);
       })
       .catch((err) => {
         console.error(err);
-        toast.error("Login failed");
+        toast.error("La connexion a échoué");
       });
+  }
+
+  // Afficher l'écran de chargement si on est en train de rediriger
+  if (isRedirecting) {
+    return <LoadingScreen />;
   }
 
   return (
@@ -73,9 +72,9 @@ export const LoginFormWidget: React.FC = () => {
         className={cn("flex flex-col gap-6")}
       >
         <div className="flex flex-col items-center gap-2 text-center">
-          <h2 className="text-2xl font-bold">Login to your account</h2>
+          <h2 className="text-2xl font-bold">Se connecter à votre compte</h2>
           <p className="text-balance text-sm text-muted-foreground">
-            Enter your email below to login to your account
+            Entrez votre email ci-dessous pour vous connecter à votre compte
           </p>
         </div>
 
@@ -85,9 +84,9 @@ export const LoginFormWidget: React.FC = () => {
             name="email"
             render={({ field }) => (
               <FormItem className="grid gap-2">
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Adresse email</FormLabel>
                 <FormControl>
-                  <Input placeholder="email" type="email" {...field} />
+                  <Input placeholder="Adresse email" type="email" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -99,9 +98,13 @@ export const LoginFormWidget: React.FC = () => {
             name="password"
             render={({ field }) => (
               <FormItem className="grid gap-2">
-                <FormLabel>Password</FormLabel>
+                <FormLabel>Mot de passe</FormLabel>
                 <FormControl>
-                  <Input placeholder="password" type="password" {...field} />
+                  <Input
+                    placeholder="Mot de passe"
+                    type="password"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -123,17 +126,17 @@ export const LoginFormWidget: React.FC = () => {
             {loginMutation.isMutating ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              "Login"
+              "Se connecter"
             )}
           </Button>
         </div>
         <div className="text-center text-sm">
-          Don&apos;t have an account?{" "}
+          Vous n&apos;avez pas de compte ?{" "}
           <Link
             href={ROUTES.AUTH.REGISTER}
             className="underline underline-offset-4"
           >
-            Sign up
+            S&apos;inscrire
           </Link>
         </div>
       </form>

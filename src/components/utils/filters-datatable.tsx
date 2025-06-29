@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown, Filter, Search } from "lucide-react";
+import { Check, ChevronDown, Filter, Search, X } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import {
   Command,
@@ -27,18 +27,20 @@ import {
   SheetTrigger,
 } from "@/src/components/ui/sheet";
 import { Label } from "@/src/components/ui/label";
+import { Badge } from "@/src/components/ui/badge";
 
+// TODO déplacer et typer
 interface FilterDrawerProps {
   searchQuery: string;
   setSearchQuery: (value: string) => void;
-  selectedGenre: string;
-  setSelectedGenre: (value: string) => void;
-  selectedSport: string;
-  setSelectedSport: (value: string) => void;
-  selectedCountry: string;
-  setSelectedCountry: (value: string) => void;
-  selectedLanguage: string;
-  setSelectedLanguage: (value: string) => void;
+  selectedGenres: string[];
+  setSelectedGenres: (value: string[]) => void;
+  selectedSports: string[];
+  setSelectedSports: (value: string[]) => void;
+  selectedCountries: string[];
+  setSelectedCountries: (value: string[]) => void;
+  selectedLanguages: string[];
+  setSelectedLanguages: (value: string[]) => void;
   genreOptions: string[];
   sportOptions: string[];
   countryOptions: string[];
@@ -51,14 +53,14 @@ interface FilterDrawerProps {
 export const FilterDrawer = ({
   searchQuery,
   setSearchQuery,
-  selectedGenre,
-  setSelectedGenre,
-  selectedSport,
-  setSelectedSport,
-  selectedCountry,
-  setSelectedCountry,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedGenres,
+  setSelectedGenres,
+  selectedSports,
+  setSelectedSports,
+  selectedCountries,
+  setSelectedCountries,
+  selectedLanguages,
+  setSelectedLanguages,
   genreOptions,
   sportOptions,
   countryOptions,
@@ -78,59 +80,121 @@ export const FilterDrawer = ({
     resetFilters();
   };
 
-  const FilterSelect = ({
+  const MultiFilterSelect = ({
     label,
-    value,
+    selectedValues,
     options,
     onSelect,
     placeholder,
   }: {
     label: string;
-    value: string;
+    selectedValues: string[];
     options: string[];
-    onSelect: (value: string) => void;
+    onSelect: (values: string[]) => void;
     placeholder: string;
-  }) => (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">{label}</Label>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full justify-between"
-            role="combobox"
-          >
-            {value}
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
-          <Command>
-            <CommandInput placeholder={placeholder} />
-            <CommandList>
-              <CommandEmpty>Aucun résultat trouvé.</CommandEmpty>
-              <CommandGroup>
-                {options.map((option) => (
-                  <CommandItem
-                    key={option}
-                    value={option}
-                    onSelect={() => onSelect(option)}
-                  >
-                    <Check
-                      className={`mr-2 h-4 w-4 ${
-                        value === option ? "opacity-100" : "opacity-0"
-                      }`}
-                    />
-                    {option}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
+  }) => {
+    const handleSelect = (option: string) => {
+      if (option === options[0]) {
+        // "Tous les..." option
+        if (selectedValues.includes(option)) {
+          onSelect([]);
+        } else {
+          onSelect([option]);
+        }
+      } else {
+        const newValues = selectedValues.includes(option)
+          ? selectedValues.filter((v) => v !== option && v !== options[0])
+          : [...selectedValues.filter((v) => v !== options[0]), option];
+        onSelect(newValues);
+      }
+    };
+
+    const displayText =
+      selectedValues.length === 0 || selectedValues.includes(options[0])
+        ? options[0]
+        : selectedValues.length === 1
+        ? selectedValues[0]
+        : `${selectedValues.length} sélectionnés`;
+
+    return (
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">{label}</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-between"
+              role="combobox"
+            >
+              {displayText}
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0">
+            <Command>
+              <CommandInput placeholder={placeholder} />
+              <CommandList>
+                <CommandEmpty>Aucun résultat trouvé.</CommandEmpty>
+                <CommandGroup>
+                  {options.map((option) => {
+                    const isSelected = selectedValues.includes(option);
+                    const isAllOption = option === options[0];
+
+                    return (
+                      <CommandItem
+                        key={option}
+                        value={option}
+                        onSelect={() => handleSelect(option)}
+                      >
+                        <Check
+                          className={`mr-2 h-4 w-4 ${
+                            isSelected ? "opacity-100" : "opacity-0"
+                          }`}
+                        />
+                        {option}
+                        {isAllOption && isSelected && (
+                          <span className="ml-auto text-xs text-muted-foreground">
+                            (défaut)
+                          </span>
+                        )}
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+        {/* Show selected items as badges (except for "Tous les..." option) */}
+        {selectedValues.length > 0 && !selectedValues.includes(options[0]) && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {selectedValues.map((value) => (
+              <Badge key={value} variant="secondary" className="text-xs">
+                {value}
+                <button
+                  onClick={() => handleSelect(value)}
+                  className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const totalActiveFilters = [
+    selectedGenres.length > 0 && !selectedGenres.includes("Tous les genres"),
+    selectedSports.length > 0 && !selectedSports.includes("Tous les sports"),
+    selectedCountries.length > 0 &&
+      !selectedCountries.includes("Tous les pays"),
+    selectedLanguages.length > 0 &&
+      !selectedLanguages.includes("Toutes les langues"),
+    searchQuery !== "",
+  ].filter(Boolean).length;
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -140,15 +204,7 @@ export const FilterDrawer = ({
           Filtres
           {hasAnyFilter && (
             <span className="ml-1 rounded-full bg-primary px-2 py-1 text-xs text-primary-foreground">
-              {
-                [
-                  selectedGenre !== "Tous les genres",
-                  selectedSport !== "Tous les sports",
-                  selectedCountry !== "Tous les pays",
-                  selectedLanguage !== "Toutes les langues",
-                  searchQuery !== "",
-                ].filter(Boolean).length
-              }
+              {totalActiveFilters}
             </span>
           )}
         </Button>
@@ -162,35 +218,35 @@ export const FilterDrawer = ({
         </SheetHeader>
 
         <div className="grid gap-6 py-6">
-          <FilterSelect
+          <MultiFilterSelect
             label="Genre"
-            value={selectedGenre}
+            selectedValues={selectedGenres}
             options={genreOptions}
-            onSelect={setSelectedGenre}
+            onSelect={setSelectedGenres}
             placeholder="Rechercher un genre..."
           />
 
-          <FilterSelect
+          <MultiFilterSelect
             label="Sport"
-            value={selectedSport}
+            selectedValues={selectedSports}
             options={sportOptions}
-            onSelect={setSelectedSport}
+            onSelect={setSelectedSports}
             placeholder="Rechercher un sport..."
           />
 
-          <FilterSelect
+          <MultiFilterSelect
             label="Pays"
-            value={selectedCountry}
+            selectedValues={selectedCountries}
             options={countryOptions}
-            onSelect={setSelectedCountry}
+            onSelect={setSelectedCountries}
             placeholder="Rechercher un pays..."
           />
 
-          <FilterSelect
+          <MultiFilterSelect
             label="Langue"
-            value={selectedLanguage}
+            selectedValues={selectedLanguages}
             options={languageOptions}
-            onSelect={setSelectedLanguage}
+            onSelect={setSelectedLanguages}
             placeholder="Rechercher une langue..."
           />
         </div>
@@ -206,74 +262,91 @@ export const FilterDrawer = ({
   );
 };
 
-export const useFilters = (
-  initialGenre = "Tous les genres",
-  initialSport = "Tous les sports",
-  initialCountry = "Tous les pays",
-  initialLanguage = "Toutes les langues",
-) => {
+export const useFilters = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState(initialGenre);
-  const [selectedSport, setSelectedSport] = useState(initialSport);
-  const [selectedCountry, setSelectedCountry] = useState(initialCountry);
-  const [selectedLanguage, setSelectedLanguage] = useState(initialLanguage);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([
+    "Tous les genres",
+  ]);
+  const [selectedSports, setSelectedSports] = useState<string[]>([
+    "Tous les sports",
+  ]);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([
+    "Tous les pays",
+  ]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([
+    "Toutes les langues",
+  ]);
 
   // États temporaires pour le drawer (avant application)
-  const [tempGenre, setTempGenre] = useState(initialGenre);
-  const [tempSport, setTempSport] = useState(initialSport);
-  const [tempCountry, setTempCountry] = useState(initialCountry);
-  const [tempLanguage, setTempLanguage] = useState(initialLanguage);
+  const [tempGenres, setTempGenres] = useState<string[]>(["Tous les genres"]);
+  const [tempSports, setTempSports] = useState<string[]>(["Tous les sports"]);
+  const [tempCountries, setTempCountries] = useState<string[]>([
+    "Tous les pays",
+  ]);
+  const [tempLanguages, setTempLanguages] = useState<string[]>([
+    "Toutes les langues",
+  ]);
 
   const resetFilters = () => {
     setSearchQuery("");
-    setSelectedGenre(initialGenre);
-    setSelectedSport(initialSport);
-    setSelectedCountry(initialCountry);
-    setSelectedLanguage(initialLanguage);
-    setTempGenre(initialGenre);
-    setTempSport(initialSport);
-    setTempCountry(initialCountry);
-    setTempLanguage(initialLanguage);
+    setSelectedGenres(["Tous les genres"]);
+    setSelectedSports(["Tous les sports"]);
+    setSelectedCountries(["Tous les pays"]);
+    setSelectedLanguages(["Toutes les langues"]);
+    setTempGenres(["Tous les genres"]);
+    setTempSports(["Tous les sports"]);
+    setTempCountries(["Tous les pays"]);
+    setTempLanguages(["Toutes les langues"]);
   };
 
   const applyFilters = () => {
-    setSelectedGenre(tempGenre);
-    setSelectedSport(tempSport);
-    setSelectedCountry(tempCountry);
-    setSelectedLanguage(tempLanguage);
+    setSelectedGenres(tempGenres);
+    setSelectedSports(tempSports);
+    setSelectedCountries(tempCountries);
+    setSelectedLanguages(tempLanguages);
   };
 
   const hasAnyFilter =
     searchQuery !== "" ||
-    selectedGenre !== initialGenre ||
-    selectedSport !== initialSport ||
-    selectedCountry !== initialCountry ||
-    selectedLanguage !== initialLanguage;
+    (selectedGenres.length > 0 &&
+      !selectedGenres.includes("Tous les genres")) ||
+    (selectedSports.length > 0 &&
+      !selectedSports.includes("Tous les sports")) ||
+    (selectedCountries.length > 0 &&
+      !selectedCountries.includes("Tous les pays")) ||
+    (selectedLanguages.length > 0 &&
+      !selectedLanguages.includes("Toutes les langues"));
 
   return {
     searchQuery,
     setSearchQuery,
     // Valeurs appliquées (pour le filtrage)
-    selectedGenre,
-    selectedSport,
-    selectedCountry,
-    selectedLanguage,
+    selectedGenres,
+    selectedSports,
+    selectedCountries,
+    selectedLanguages,
     // Valeurs temporaires (pour le drawer)
-    tempGenre,
-    setTempGenre,
-    tempSport,
-    setTempSport,
-    tempCountry,
-    setTempCountry,
-    tempLanguage,
-    setTempLanguage,
+    tempGenres,
+    setTempGenres,
+    tempSports,
+    setTempSports,
+    tempCountries,
+    setTempCountries,
+    tempLanguages,
+    setTempLanguages,
     resetFilters,
     applyFilters,
     hasAnyFilter,
+    // Helper functions for URL sync
+    setSelectedGenres,
+    setSelectedSports,
+    setSelectedCountries,
+    setSelectedLanguages,
   };
 };
 
 // Options de filtres
+// TODO déplacer type global
 export const genres = ["Tous les genres", "Homme", "Femme", "Non-binaire"];
 export const sports = [
   "Tous les sports",

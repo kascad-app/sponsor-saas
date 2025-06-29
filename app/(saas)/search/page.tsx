@@ -1,10 +1,7 @@
 "use client";
 
-import { Rider, riders } from "@/src/lib/dashboard.lib";
+import { riders } from "@/src/lib/dashboard.lib";
 import { Card, CardContent } from "@/src/components/ui/card";
-import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
-import { Badge } from "@/src/components/ui/badge";
-import { MapPin } from "lucide-react";
 import {
   FilterDrawer,
   useFilters,
@@ -13,92 +10,10 @@ import {
   countries,
   languages,
 } from "@/src/components/utils/filters-datatable";
-import Image from "next/image";
-import Link from "next/link";
-import { useFavorites } from "@/src/contexts/favorites-context";
 import { KascadLogo } from "@/src/shared/ui/Kascad-logo.ui";
-
-// Rider Card Component
-const RiderCard = ({ rider }: { rider: Rider }) => {
-  const { isFavorite } = useFavorites();
-
-  const getSportImage = (sport: string) => {
-    switch (sport.toLowerCase()) {
-      case "bmx":
-        return "/bannerBmx.jpg";
-      case "mountain biking":
-        return "/bannerMountainBike.png";
-      case "skate":
-        return "/bannerSkate.jpg";
-      default:
-        return "/bannerMountainBike.jpg";
-    }
-  };
-
-  return (
-    <Link href={`/details-rider/${rider.id}`}>
-      <Card className="hover:shadow-md transition-shadow overflow-hidden h-full">
-        <div className="relative h-40 w-full">
-          <Image
-            src={getSportImage(rider.sport)}
-            alt={rider.name}
-            fill
-            className="object-cover"
-          />
-          {isFavorite(rider.id) && (
-            <div className="absolute top-2 right-2">
-              <Badge className="bg-red-500">Favoris</Badge>
-            </div>
-          )}
-        </div>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <Avatar className="h-10 w-10">
-              <AvatarFallback>
-                {rider.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .substring(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-medium">{rider.name}</h3>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Badge variant="outline" className="text-xs">
-                  {rider.sport}
-                </Badge>
-                <Badge
-                  className={
-                    rider.status === "active"
-                      ? "bg-green-100 text-green-800 hover:bg-green-100"
-                      : "bg-red-100 text-red-800 hover:bg-red-100"
-                  }
-                >
-                  {rider.status === "active" ? "Actif" : "Inactif"}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {(rider.city || rider.country) && (
-            <div className="flex items-center text-xs text-muted-foreground mt-2">
-              <MapPin className="h-3 w-3 mr-1" />
-              {rider.city && rider.country
-                ? `${rider.city}, ${rider.country}`
-                : rider.city || rider.country}
-            </div>
-          )}
-
-          {rider.description && (
-            <p className="mt-2 text-sm line-clamp-2">{rider.description}</p>
-          )}
-        </CardContent>
-      </Card>
-    </Link>
-  );
-};
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import RiderCard from "@/src/widget/rider/card";
 
 // Empty State Card Component
 const EmptyStateCard = () => (
@@ -119,45 +34,189 @@ const EmptyStateCard = () => (
 );
 
 export default function Search() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const showAllParam = searchParams.get("showAll");
+
   const {
     searchQuery,
     setSearchQuery,
-    selectedGenre,
-    selectedSport,
-    selectedCountry,
-    selectedLanguage,
-    tempGenre,
-    setTempGenre,
-    tempSport,
-    setTempSport,
-    tempCountry,
-    setTempCountry,
-    tempLanguage,
-    setTempLanguage,
+    selectedGenres,
+    selectedSports,
+    selectedCountries,
+    selectedLanguages,
+    tempGenres,
+    setTempGenres,
+    tempSports,
+    setTempSports,
+    tempCountries,
+    setTempCountries,
+    tempLanguages,
+    setTempLanguages,
     hasAnyFilter,
-    resetFilters,
-    applyFilters,
+    resetFilters: originalResetFilters,
+    applyFilters: originalApplyFilters,
+    setSelectedGenres,
+    setSelectedSports,
+    setSelectedCountries,
+    setSelectedLanguages,
   } = useFilters();
+
+  // Helper functions to convert between URL params and arrays
+  const parseUrlParam = (param: string | null): string[] => {
+    if (!param) return [];
+    return param.split(",").filter(Boolean);
+  };
+
+  const arrayToUrlParam = (arr: string[]): string => {
+    return arr.filter((item) => !item.startsWith("Tous")).join(",");
+  };
+
+  // Update URL when filters change
+  const updateUrl = (
+    genres: string[],
+    sports: string[],
+    countries: string[],
+    languages: string[],
+    query: string = "",
+  ) => {
+    const params = new URLSearchParams();
+
+    const genreParam = arrayToUrlParam(genres);
+    const sportParam = arrayToUrlParam(sports);
+    const countryParam = arrayToUrlParam(countries);
+    const languageParam = arrayToUrlParam(languages);
+
+    if (genreParam) params.set("genre", genreParam);
+    if (sportParam) params.set("sport", sportParam);
+    if (countryParam) params.set("country", countryParam);
+    if (languageParam) params.set("language", languageParam);
+    if (query) params.set("q", query);
+
+    const newUrl = params.toString()
+      ? `/search?${params.toString()}`
+      : "/search";
+    router.replace(newUrl);
+  };
+
+  // Custom reset function that also removes URL params
+  const resetFilters = () => {
+    originalResetFilters();
+    router.replace("/search");
+  };
+
+  // Custom apply function that updates URL
+  const applyFilters = () => {
+    originalApplyFilters();
+    updateUrl(
+      tempGenres,
+      tempSports,
+      tempCountries,
+      tempLanguages,
+      searchQuery,
+    );
+  };
+
+  // Load filters from URL on mount
+  useEffect(() => {
+    const genreParam = parseUrlParam(searchParams.get("genre"));
+    const sportParam = parseUrlParam(searchParams.get("sport"));
+    const countryParam = parseUrlParam(searchParams.get("country"));
+    const languageParam = parseUrlParam(searchParams.get("language"));
+    const queryParam = searchParams.get("q") || "";
+
+    // Handle showAll param by converting it to all sports
+    if (showAllParam === "true") {
+      const allSports = sports.filter((sport) => sport !== "Tous les sports");
+      setSelectedSports(allSports);
+      setTempSports(allSports);
+
+      // Update URL to remove showAll and add all sports
+      const params = new URLSearchParams(searchParams);
+      params.delete("showAll");
+      params.set("sport", allSports.join(","));
+      router.replace(`/search?${params.toString()}`);
+      return;
+    }
+
+    // Set initial values if URL params exist
+    if (genreParam.length > 0) {
+      setSelectedGenres(genreParam);
+      setTempGenres(genreParam);
+    }
+    if (sportParam.length > 0) {
+      setSelectedSports(sportParam);
+      setTempSports(sportParam);
+    }
+    if (countryParam.length > 0) {
+      setSelectedCountries(countryParam);
+      setTempCountries(countryParam);
+    }
+    if (languageParam.length > 0) {
+      setSelectedLanguages(languageParam);
+      setTempLanguages(languageParam);
+    }
+    if (queryParam) {
+      setSearchQuery(queryParam);
+    }
+  }, [
+    searchParams,
+    showAllParam,
+    setSelectedGenres,
+    setSelectedSports,
+    setSelectedCountries,
+    setSelectedLanguages,
+    setSearchQuery,
+    setTempGenres,
+    setTempSports,
+    setTempCountries,
+    setTempLanguages,
+    router,
+  ]);
 
   // Check if any filters are applied (excluding default values)
   const hasActiveFilters =
     searchQuery !== "" ||
-    selectedGenre !== "Tous les genres" ||
-    selectedSport !== "Tous les sports" ||
-    selectedCountry !== "Tous les pays" ||
-    selectedLanguage !== "Toutes les langues";
+    (selectedGenres.length > 0 &&
+      !selectedGenres.includes("Tous les genres")) ||
+    (selectedSports.length > 0 &&
+      !selectedSports.includes("Tous les sports")) ||
+    (selectedCountries.length > 0 &&
+      !selectedCountries.includes("Tous les pays")) ||
+    (selectedLanguages.length > 0 &&
+      !selectedLanguages.includes("Toutes les langues"));
 
-  // Filter riders based on search and filters - only if filters are applied
+  // Filter riders based on search and filters
   const filteredRiders = hasActiveFilters
     ? riders.filter((rider) => {
         const matchesSearch = rider.name
           .toLowerCase()
           .includes(searchQuery.toLowerCase());
-        const matchesSport =
-          selectedSport === "Tous les sports" || rider.sport === selectedSport;
-        // Note: Add genre, country, language filtering when these properties are available in Rider type
 
-        return matchesSearch && matchesSport;
+        const matchesGenre =
+          selectedGenres.includes("Tous les genres") ||
+          selectedGenres.length === 0; // Genre matching would need rider.genre property
+
+        const matchesSport =
+          selectedSports.includes("Tous les sports") ||
+          selectedSports.length === 0 ||
+          selectedSports.includes(rider.sport);
+
+        const matchesCountry =
+          selectedCountries.includes("Tous les pays") ||
+          selectedCountries.length === 0; // Country matching would need rider.country property
+
+        const matchesLanguage =
+          selectedLanguages.includes("Toutes les langues") ||
+          selectedLanguages.length === 0; // Language matching would need rider.language property
+
+        return (
+          matchesSearch &&
+          matchesGenre &&
+          matchesSport &&
+          matchesCountry &&
+          matchesLanguage
+        );
       })
     : [];
 
@@ -169,14 +228,14 @@ export default function Search() {
         <FilterDrawer
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          selectedGenre={tempGenre}
-          setSelectedGenre={setTempGenre}
-          selectedSport={tempSport}
-          setSelectedSport={setTempSport}
-          selectedCountry={tempCountry}
-          setSelectedCountry={setTempCountry}
-          selectedLanguage={tempLanguage}
-          setSelectedLanguage={setTempLanguage}
+          selectedGenres={tempGenres}
+          setSelectedGenres={setTempGenres}
+          selectedSports={tempSports}
+          setSelectedSports={setTempSports}
+          selectedCountries={tempCountries}
+          setSelectedCountries={setTempCountries}
+          selectedLanguages={tempLanguages}
+          setSelectedLanguages={setTempLanguages}
           genreOptions={genres}
           sportOptions={sports}
           countryOptions={countries}
@@ -191,6 +250,10 @@ export default function Search() {
         {hasActiveFilters && (
           <p className="text-muted-foreground mb-4">
             {filteredRiders.length} riders trouvés
+            {selectedSports.length > 0 &&
+              !selectedSports.includes("Tous les sports") && (
+                <span className="ml-1">pour {selectedSports.join(", ")}</span>
+              )}
           </p>
         )}
 

@@ -15,12 +15,12 @@ import { Rider, riders } from "@/src/lib/dashboard.lib";
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import {
   FilterDrawer,
-  useFilters,
   genres,
   sports,
   countries,
   languages,
 } from "@/src/components/utils/filters-datatable";
+import { useDashboardFilters } from "@/src/components/utils/use-dashboard-filters";
 
 // Define the columns for the DataTable
 const columns: ColumnDef<Rider>[] = [
@@ -100,10 +100,10 @@ export const RidersDashboard = () => {
   const {
     searchQuery,
     setSearchQuery,
-    selectedGenre,
+    // selectedGenre,
     selectedSport,
-    selectedCountry,
-    selectedLanguage,
+    // selectedCountry,
+    // selectedLanguage,
     tempGenre,
     setTempGenre,
     tempSport,
@@ -115,7 +115,7 @@ export const RidersDashboard = () => {
     hasAnyFilter,
     resetFilters,
     applyFilters,
-  } = useFilters();
+  } = useDashboardFilters();
 
   const filteredRiders = riders.filter((rider) => {
     const matchesSearch = rider.name
@@ -166,14 +166,30 @@ export const RidersDashboard = () => {
               <FilterDrawer
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
-                selectedGenre={tempGenre}
-                setSelectedGenre={setTempGenre}
-                selectedSport={selectedSport}
-                setSelectedSport={setTempSport}
-                selectedCountry={selectedCountry}
-                setSelectedCountry={setTempCountry}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setTempLanguage}
+                selectedGenres={[tempGenre].filter(
+                  (g) => g !== "Tous les genres",
+                )}
+                setSelectedGenres={(genres) =>
+                  setTempGenre(genres[0] || "Tous les genres")
+                }
+                selectedSports={[tempSport].filter(
+                  (s) => s !== "Tous les sports",
+                )}
+                setSelectedSports={(sports) =>
+                  setTempSport(sports[0] || "Tous les sports")
+                }
+                selectedCountries={[tempCountry].filter(
+                  (c) => c !== "Tous les pays",
+                )}
+                setSelectedCountries={(countries) =>
+                  setTempCountry(countries[0] || "Tous les pays")
+                }
+                selectedLanguages={[tempLanguage].filter(
+                  (l) => l !== "Toutes les langues",
+                )}
+                setSelectedLanguages={(languages) =>
+                  setTempLanguage(languages[0] || "Toutes les langues")
+                }
                 genreOptions={genres}
                 sportOptions={sports}
                 countryOptions={countries}

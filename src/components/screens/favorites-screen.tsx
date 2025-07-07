@@ -17,11 +17,8 @@ import { DataTableWidget } from "@/src/widgets/data-table-sponsor";
 import { Rider, riders } from "@/src/lib/dashboard.lib";
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import { useFavorites } from "@/src/contexts/favorites-context";
-import {
-  Filters,
-  useFilters,
-  sports,
-} from "@/src/components/utils/filters-datatable";
+import { Filters, sports } from "@/src/components/utils/filters-datatable";
+import { useDashboardFilters } from "@/src/components/utils/use-dashboard-filters";
 
 // Define the columns for the DataTable
 const columns: ColumnDef<Rider>[] = [
@@ -106,7 +103,7 @@ export const FavoritesScreen = () => {
     setTempSport,
     hasAnyFilter,
     resetFilters,
-  } = useFilters();
+  } = useDashboardFilters();
 
   // Filter the riders based on search query, selected filters, and favorites
   const filteredRiders = riders.filter((rider) => {
@@ -116,7 +113,7 @@ export const FavoritesScreen = () => {
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesSport =
-      selectedSport === "All Sports" || rider.sport === selectedSport;
+      selectedSport === "Tous les sports" || rider.sport === selectedSport;
 
     return matchesSearch && matchesSport;
   });
@@ -162,7 +159,7 @@ export const FavoritesScreen = () => {
                   </div>
                   <CardTitle>Aucun rider en favoris</CardTitle>
                   <CardDescription>
-                    Vous n'avez pas encore ajouté de riders à vos favoris.
+                    Vous n&apos;avez pas encore ajouté de riders à vos favoris.
                     Découvrez nos riders et ajoutez-les à vos favoris !
                   </CardDescription>
                 </CardHeader>

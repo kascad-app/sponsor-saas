@@ -52,7 +52,7 @@ interface FilterDrawerProps {
 
 export const FilterDrawer = ({
   searchQuery,
-  setSearchQuery,
+  // setSearchQuery,
   selectedGenres,
   setSelectedGenres,
   selectedSports,

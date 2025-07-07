@@ -2,18 +2,14 @@
 
 import { riders } from "@/src/lib/dashboard.lib";
 import { Card, CardContent } from "@/src/components/ui/card";
-import {
-  FilterDrawer,
-  useFilters,
-  genres,
-  sports,
-  countries,
-  languages,
-} from "@/src/components/utils/filters-datatable";
 import { KascadLogo } from "@/src/shared/ui/Kascad-logo.ui";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import RiderCard from "@/src/widget/rider/card";
+import { EnhancedFilterDrawer } from "@/src/components/utils/enhanced-filter-drawer";
+import { useSearchFilters } from "@/src/entities/scouting/use-search-filters";
+import { AuthenticationHooks } from "@/src/entities/authentication";
+import { SearchFilters } from "@/src/entities/scouting/scouting.types";
 
 // Empty State Card Component
 const EmptyStateCard = () => (
@@ -36,62 +32,37 @@ const EmptyStateCard = () => (
 export default function Search() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const showAllParam = searchParams.get("showAll");
-
+  const { data: user } = AuthenticationHooks.useMe();
+  // hook filters
   const {
-    searchQuery,
-    setSearchQuery,
-    selectedGenres,
-    selectedSports,
-    selectedCountries,
-    selectedLanguages,
-    tempGenres,
-    setTempGenres,
-    tempSports,
-    setTempSports,
-    tempCountries,
-    setTempCountries,
-    tempLanguages,
-    setTempLanguages,
-    hasAnyFilter,
+    filters,
+    tempFilters,
+    setTempFilters,
+    updateTempFilter,
     resetFilters: originalResetFilters,
     applyFilters: originalApplyFilters,
-    setSelectedGenres,
-    setSelectedSports,
-    setSelectedCountries,
-    setSelectedLanguages,
-  } = useFilters();
+    hasActiveFilters,
+    savedSearches,
+    saveCurrentSearch,
+    loadSavedSearch,
+    deleteSavedSearchById,
+    isCreatingSavedSearch,
+    filterOptions,
+    setFilters,
+  } = useSearchFilters(user?._id);
 
-  // Helper functions to convert between URL params and arrays
-  const parseUrlParam = (param: string | null): string[] => {
-    if (!param) return [];
-    return param.split(",").filter(Boolean);
-  };
-
-  const arrayToUrlParam = (arr: string[]): string => {
-    return arr.filter((item) => !item.startsWith("Tous")).join(",");
-  };
-
-  // Update URL when filters change
-  const updateUrl = (
-    genres: string[],
-    sports: string[],
-    countries: string[],
-    languages: string[],
-    query: string = "",
-  ) => {
+  const updateUrl = (searchFilters: typeof filters) => {
     const params = new URLSearchParams();
 
-    const genreParam = arrayToUrlParam(genres);
-    const sportParam = arrayToUrlParam(sports);
-    const countryParam = arrayToUrlParam(countries);
-    const languageParam = arrayToUrlParam(languages);
-
-    if (genreParam) params.set("genre", genreParam);
-    if (sportParam) params.set("sport", sportParam);
-    if (countryParam) params.set("country", countryParam);
-    if (languageParam) params.set("language", languageParam);
-    if (query) params.set("q", query);
+    Object.entries(searchFilters).forEach(([key, value]) => {
+      if (Array.isArray(value) && value.length > 0) {
+        params.set(key, value.join(","));
+      } else if (typeof value === "string" && value) {
+        params.set(key, value);
+      } else if (typeof value === "boolean") {
+        params.set(key, value.toString());
+      }
+    });
 
     const newUrl = params.toString()
       ? `/search?${params.toString()}`
@@ -99,124 +70,79 @@ export default function Search() {
     router.replace(newUrl);
   };
 
-  // Custom reset function that also removes URL params
+  // removes URL params
   const resetFilters = () => {
     originalResetFilters();
     router.replace("/search");
   };
 
-  // Custom apply function that updates URL
+  // updates URL
   const applyFilters = () => {
     originalApplyFilters();
-    updateUrl(
-      tempGenres,
-      tempSports,
-      tempCountries,
-      tempLanguages,
-      searchQuery,
-    );
+    updateUrl(tempFilters);
   };
 
-  // Load filters from URL on mount
+  // TODO opti
   useEffect(() => {
-    const genreParam = parseUrlParam(searchParams.get("genre"));
-    const sportParam = parseUrlParam(searchParams.get("sport"));
-    const countryParam = parseUrlParam(searchParams.get("country"));
-    const languageParam = parseUrlParam(searchParams.get("language"));
-    const queryParam = searchParams.get("q") || "";
+    const urlFilters: Partial<SearchFilters> = {};
 
-    // Handle showAll param by converting it to all sports
-    if (showAllParam === "true") {
-      const allSports = sports.filter((sport) => sport !== "Tous les sports");
-      setSelectedSports(allSports);
-      setTempSports(allSports);
+    searchParams.forEach((value, key) => {
+      switch (key) {
+        case "searchQuery":
+        case "minBirthdate":
+        case "maxBirthdate":
+          urlFilters[key] = value;
+          break;
+        case "isBeenSponsored":
+        case "isDisponible":
+          urlFilters[key] = value === "true";
+          break;
+        case "sports":
+        case "countries":
+        case "gender":
+        case "languages":
+        case "socials":
+        case "contractType":
+          urlFilters[key] = value.split(",").filter(Boolean);
+          break;
+      }
+    });
 
-      // Update URL to remove showAll and add all sports
-      const params = new URLSearchParams(searchParams);
-      params.delete("showAll");
-      params.set("sport", allSports.join(","));
-      router.replace(`/search?${params.toString()}`);
-      return;
+    if (Object.keys(urlFilters).length > 0) {
+      setTempFilters(urlFilters);
+      setFilters(urlFilters);
     }
+  }, [searchParams, setTempFilters]);
 
-    // Set initial values if URL params exist
-    if (genreParam.length > 0) {
-      setSelectedGenres(genreParam);
-      setTempGenres(genreParam);
-    }
-    if (sportParam.length > 0) {
-      setSelectedSports(sportParam);
-      setTempSports(sportParam);
-    }
-    if (countryParam.length > 0) {
-      setSelectedCountries(countryParam);
-      setTempCountries(countryParam);
-    }
-    if (languageParam.length > 0) {
-      setSelectedLanguages(languageParam);
-      setTempLanguages(languageParam);
-    }
-    if (queryParam) {
-      setSearchQuery(queryParam);
-    }
-  }, [
-    searchParams,
-    showAllParam,
-    setSelectedGenres,
-    setSelectedSports,
-    setSelectedCountries,
-    setSelectedLanguages,
-    setSearchQuery,
-    setTempGenres,
-    setTempSports,
-    setTempCountries,
-    setTempLanguages,
-    router,
-  ]);
-
-  // Check if any filters are applied (excluding default values)
-  const hasActiveFilters =
-    searchQuery !== "" ||
-    (selectedGenres.length > 0 &&
-      !selectedGenres.includes("Tous les genres")) ||
-    (selectedSports.length > 0 &&
-      !selectedSports.includes("Tous les sports")) ||
-    (selectedCountries.length > 0 &&
-      !selectedCountries.includes("Tous les pays")) ||
-    (selectedLanguages.length > 0 &&
-      !selectedLanguages.includes("Toutes les langues"));
-
-  // Filter riders based on search and filters
   const filteredRiders = hasActiveFilters
     ? riders.filter((rider) => {
-        const matchesSearch = rider.name
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+        if (
+          filters.searchQuery &&
+          !rider.name.toLowerCase().includes(filters.searchQuery.toLowerCase())
+        ) {
+          return false;
+        }
 
-        const matchesGenre =
-          selectedGenres.includes("Tous les genres") ||
-          selectedGenres.length === 0; // Genre matching would need rider.genre property
+        if (
+          filters.sports &&
+          filters.sports.length > 0 &&
+          !filters.sports.includes(rider.sport)
+        ) {
+          return false;
+        }
 
-        const matchesSport =
-          selectedSports.includes("Tous les sports") ||
-          selectedSports.length === 0 ||
-          selectedSports.includes(rider.sport);
+        if (
+          filters.countries &&
+          filters.countries.length > 0 &&
+          rider.country &&
+          !filters.countries.includes(rider.country)
+        ) {
+          return false;
+        }
 
-        const matchesCountry =
-          selectedCountries.includes("Tous les pays") ||
-          selectedCountries.length === 0; // Country matching would need rider.country property
+        // TODO ajouter tous les filtres
 
-        const matchesLanguage =
-          selectedLanguages.includes("Toutes les langues") ||
-          selectedLanguages.length === 0; // Language matching would need rider.language property
-
-        return (
-          matchesSearch &&
-          matchesGenre &&
-          matchesSport &&
-          matchesCountry &&
-          matchesLanguage
-        );
+        return true;
       })
     : [];
 
@@ -225,24 +151,20 @@ export default function Search() {
       <h1 className="text-2xl font-bold mb-6">Rechercher des riders</h1>
 
       <div className="flex justify-between items-center mb-6">
-        <FilterDrawer
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          selectedGenres={tempGenres}
-          setSelectedGenres={setTempGenres}
-          selectedSports={tempSports}
-          setSelectedSports={setTempSports}
-          selectedCountries={tempCountries}
-          setSelectedCountries={setTempCountries}
-          selectedLanguages={tempLanguages}
-          setSelectedLanguages={setTempLanguages}
-          genreOptions={genres}
-          sportOptions={sports}
-          countryOptions={countries}
-          languageOptions={languages}
-          hasAnyFilter={hasAnyFilter}
+        <EnhancedFilterDrawer
+          filters={filters}
+          tempFilters={tempFilters}
+          updateTempFilter={updateTempFilter}
+          setTempFilters={setTempFilters}
+          hasActiveFilters={hasActiveFilters}
           resetFilters={resetFilters}
           applyFilters={applyFilters}
+          filterOptions={filterOptions}
+          savedSearches={savedSearches}
+          saveCurrentSearch={saveCurrentSearch}
+          loadSavedSearch={loadSavedSearch}
+          deleteSavedSearchById={deleteSavedSearchById}
+          isCreatingSavedSearch={isCreatingSavedSearch}
         />
       </div>
 
@@ -250,10 +172,6 @@ export default function Search() {
         {hasActiveFilters && (
           <p className="text-muted-foreground mb-4">
             {filteredRiders.length} riders trouvés
-            {selectedSports.length > 0 &&
-              !selectedSports.includes("Tous les sports") && (
-                <span className="ml-1">pour {selectedSports.join(", ")}</span>
-              )}
           </p>
         )}
 

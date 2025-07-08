@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import React from "react";
-
 import { ROUTES } from "../constants/ROUTES";
 import { AuthenticationTypes } from "@/src/entities/authentication";
 import { useMe } from "@/src/entities/authentication/authentication.hooks";

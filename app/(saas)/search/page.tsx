@@ -1,152 +1,183 @@
 "use client";
 
-import { Rider, riders } from "@/src/lib/dashboard.lib";
+import { riders } from "@/src/lib/dashboard.lib";
 import { Card, CardContent } from "@/src/components/ui/card";
-import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
-import { Badge } from "@/src/components/ui/badge";
-import { MapPin } from "lucide-react";
-import {
-  useFilters,
-  Filters,
-  sports,
-  statuses,
-} from "@/src/components/utils/filters-datatable";
-import Image from "next/image";
-import Link from "next/link";
-import { useFavorites } from "@/src/contexts/favorites-context";
+import { KascadLogo } from "@/src/shared/ui/Kascad-logo.ui";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import RiderCard from "@/src/widget/rider/card";
+import { EnhancedFilterDrawer } from "@/src/components/utils/enhanced-filter-drawer";
+import { useSearchFilters } from "@/src/entities/scouting/use-search-filters";
+import { AuthenticationHooks } from "@/src/entities/authentication";
+import { SearchFilters } from "@/src/entities/scouting/scouting.types";
 
-// Rider Card Component
-const RiderCard = ({ rider }: { rider: Rider }) => {
-  const { isFavorite } = useFavorites();
-
-  const getSportImage = (sport: string) => {
-    switch (sport.toLowerCase()) {
-      case "bmx":
-        return "/bannerBmx.jpg";
-      case "mountain biking":
-        return "/bannerMountainBike.png";
-      case "skate":
-        return "/bannerSkate.jpg";
-      default:
-        return "/bannerMountainBike.jpg";
-    }
-  };
-
-  return (
-    <Link href={`/details-rider/${rider.id}`}>
-      <Card className="hover:shadow-md transition-shadow overflow-hidden h-full">
-        <div className="relative h-40 w-full">
-          <Image
-            src={getSportImage(rider.sport)}
-            alt={rider.name}
-            fill
-            className="object-cover"
-          />
-          {isFavorite(rider.id) && (
-            <div className="absolute top-2 right-2">
-              <Badge className="bg-red-500">Favoris</Badge>
-            </div>
-          )}
+// Empty State Card Component
+const EmptyStateCard = () => (
+  <div className="flex flex-col items-center justify-center py-20">
+    <Card className="w-full max-w-2xl">
+      <CardContent className="flex flex-col items-center justify-center p-16 text-center">
+        <div className="mb-8">
+          <KascadLogo />
         </div>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <Avatar className="h-10 w-10">
-              <AvatarFallback>
-                {rider.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .substring(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-medium">{rider.name}</h3>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Badge variant="outline" className="text-xs">
-                  {rider.sport}
-                </Badge>
-                <Badge
-                  className={
-                    rider.status === "active"
-                      ? "bg-green-100 text-green-800 hover:bg-green-100"
-                      : "bg-red-100 text-red-800 hover:bg-red-100"
-                  }
-                >
-                  {rider.status === "active" ? "Actif" : "Inactif"}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {(rider.city || rider.country) && (
-            <div className="flex items-center text-xs text-muted-foreground mt-2">
-              <MapPin className="h-3 w-3 mr-1" />
-              {rider.city && rider.country
-                ? `${rider.city}, ${rider.country}`
-                : rider.city || rider.country}
-            </div>
-          )}
-
-          {rider.description && (
-            <p className="mt-2 text-sm line-clamp-2">{rider.description}</p>
-          )}
-        </CardContent>
-      </Card>
-    </Link>
-  );
-};
+        <h3 className="text-2xl font-semibold mb-4">Appliquer des filtres</h3>
+        <p className="text-muted-foreground text-lg max-w-md">
+          Utilisez les filtres pour découvrir des riders qui correspondent à vos
+          critères
+        </p>
+      </CardContent>
+    </Card>
+  </div>
+);
 
 export default function Search() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { data: user } = AuthenticationHooks.useMe();
+  // hook filters
   const {
-    searchQuery,
-    setSearchQuery,
-    selectedSport,
-    setSelectedSport,
-    selectedStatus,
-    setSelectedStatus,
-    hasAnyFilter,
-    resetFilters,
-  } = useFilters();
+    filters,
+    tempFilters,
+    setTempFilters,
+    updateTempFilter,
+    resetFilters: originalResetFilters,
+    applyFilters: originalApplyFilters,
+    hasActiveFilters,
+    savedSearches,
+    saveCurrentSearch,
+    loadSavedSearch,
+    deleteSavedSearchById,
+    isCreatingSavedSearch,
+    filterOptions,
+    setFilters,
+  } = useSearchFilters(user?._id);
 
-  // Filter riders based on search and filters
-  const filteredRiders = riders.filter((rider) => {
-    const matchesSearch = rider.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesSport =
-      selectedSport === "All Sports" || rider.sport === selectedSport;
-    const matchesStatus =
-      selectedStatus === "All Statuses" ||
-      (selectedStatus === "Active" && rider.status === "active") ||
-      (selectedStatus === "Inactive" && rider.status === "inactive");
+  const updateUrl = (searchFilters: typeof filters) => {
+    const params = new URLSearchParams();
 
-    return matchesSearch && matchesSport && matchesStatus;
-  });
+    Object.entries(searchFilters).forEach(([key, value]) => {
+      if (Array.isArray(value) && value.length > 0) {
+        params.set(key, value.join(","));
+      } else if (typeof value === "string" && value) {
+        params.set(key, value);
+      } else if (typeof value === "boolean") {
+        params.set(key, value.toString());
+      }
+    });
+
+    const newUrl = params.toString()
+      ? `/search?${params.toString()}`
+      : "/search";
+    router.replace(newUrl);
+  };
+
+  // removes URL params
+  const resetFilters = () => {
+    originalResetFilters();
+    router.replace("/search");
+  };
+
+  // updates URL
+  const applyFilters = () => {
+    originalApplyFilters();
+    updateUrl(tempFilters);
+  };
+
+  // TODO opti
+  useEffect(() => {
+    const urlFilters: Partial<SearchFilters> = {};
+
+    searchParams.forEach((value, key) => {
+      switch (key) {
+        case "searchQuery":
+        case "minBirthdate":
+        case "maxBirthdate":
+          urlFilters[key] = value;
+          break;
+        case "isBeenSponsored":
+        case "isDisponible":
+          urlFilters[key] = value === "true";
+          break;
+        case "sports":
+        case "countries":
+        case "gender":
+        case "languages":
+        case "socials":
+        case "contractType":
+          urlFilters[key] = value.split(",").filter(Boolean);
+          break;
+      }
+    });
+
+    if (Object.keys(urlFilters).length > 0) {
+      setTempFilters(urlFilters);
+      setFilters(urlFilters);
+    }
+  }, [searchParams, setTempFilters]);
+
+  const filteredRiders = hasActiveFilters
+    ? riders.filter((rider) => {
+        if (
+          filters.searchQuery &&
+          !rider.name.toLowerCase().includes(filters.searchQuery.toLowerCase())
+        ) {
+          return false;
+        }
+
+        if (
+          filters.sports &&
+          filters.sports.length > 0 &&
+          !filters.sports.includes(rider.sport)
+        ) {
+          return false;
+        }
+
+        if (
+          filters.countries &&
+          filters.countries.length > 0 &&
+          rider.country &&
+          !filters.countries.includes(rider.country)
+        ) {
+          return false;
+        }
+
+        // TODO ajouter tous les filtres
+
+        return true;
+      })
+    : [];
 
   return (
     <div className="container mx-auto py-6">
       <h1 className="text-2xl font-bold mb-6">Rechercher des riders</h1>
 
-      <Filters
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        selectedSport={selectedSport}
-        setSelectedSport={setSelectedSport}
-        selectedStatus={selectedStatus}
-        setSelectedStatus={setSelectedStatus}
-        sportOptions={sports}
-        statusOptions={statuses}
-        hasAnyFilter={hasAnyFilter}
-        resetFilters={resetFilters}
-      />
+      <div className="flex justify-between items-center mb-6">
+        <EnhancedFilterDrawer
+          filters={filters}
+          tempFilters={tempFilters}
+          updateTempFilter={updateTempFilter}
+          setTempFilters={setTempFilters}
+          hasActiveFilters={hasActiveFilters}
+          resetFilters={resetFilters}
+          applyFilters={applyFilters}
+          filterOptions={filterOptions}
+          savedSearches={savedSearches}
+          saveCurrentSearch={saveCurrentSearch}
+          loadSavedSearch={loadSavedSearch}
+          deleteSavedSearchById={deleteSavedSearchById}
+          isCreatingSavedSearch={isCreatingSavedSearch}
+        />
+      </div>
 
       <div className="mt-6">
-        <p className="text-muted-foreground mb-4">
-          {filteredRiders.length} riders trouvés
-        </p>
+        {hasActiveFilters && (
+          <p className="text-muted-foreground mb-4">
+            {filteredRiders.length} riders trouvés
+          </p>
+        )}
 
-        {filteredRiders.length > 0 ? (
+        {!hasActiveFilters ? (
+          <EmptyStateCard />
+        ) : filteredRiders.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredRiders.map((rider) => (
               <RiderCard key={rider.id} rider={rider} />

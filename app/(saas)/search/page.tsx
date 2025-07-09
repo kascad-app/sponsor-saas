@@ -1,38 +1,32 @@
 "use client";
 
 import { riders } from "@/src/lib/dashboard.lib";
-import { Card, CardContent } from "@/src/components/ui/card";
-import { KascadLogo } from "@/src/shared/ui/Kascad-logo.ui";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import RiderCard from "@/src/widget/rider/card";
-import { EnhancedFilterDrawer } from "@/src/components/utils/enhanced-filter-drawer";
+import {
+  EnhancedFilterDrawer,
+  EnhancedFilterDrawerRef,
+} from "@/src/components/utils/enhanced-filter-drawer";
 import { useSearchFilters } from "@/src/entities/scouting/use-search-filters";
 import { AuthenticationHooks } from "@/src/entities/authentication";
 import { SearchFilters } from "@/src/entities/scouting/scouting.types";
+import { Input } from "@/src/components/ui/input";
+import { Search } from "lucide-react";
+import { NoResultsCard } from "@/src/widget/scouting/no-result-card";
+import { EmptyStateCard } from "@/src/widget/scouting/empty-state-card";
+import {
+  getActiveFilters,
+  filterRiders,
+} from "@/src/lib/scouting/scouting.lib";
 
-// Empty State Card Component
-const EmptyStateCard = () => (
-  <div className="flex flex-col items-center justify-center py-20">
-    <Card className="w-full max-w-2xl">
-      <CardContent className="flex flex-col items-center justify-center p-16 text-center">
-        <div className="mb-8">
-          <KascadLogo />
-        </div>
-        <h3 className="text-2xl font-semibold mb-4">Appliquer des filtres</h3>
-        <p className="text-muted-foreground text-lg max-w-md">
-          Utilisez les filtres pour découvrir des riders qui correspondent à vos
-          critères
-        </p>
-      </CardContent>
-    </Card>
-  </div>
-);
-
-export default function Search() {
+export default function SearchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: user } = AuthenticationHooks.useMe();
+  const drawerRef = useRef<EnhancedFilterDrawerRef>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // hook filters
   const {
     filters,
@@ -51,38 +45,83 @@ export default function Search() {
     setFilters,
   } = useSearchFilters(user?._id);
 
-  const updateUrl = (searchFilters: typeof filters) => {
-    const params = new URLSearchParams();
+  const updateUrl = useCallback(
+    (searchFilters: typeof filters) => {
+      const params = new URLSearchParams();
 
-    Object.entries(searchFilters).forEach(([key, value]) => {
-      if (Array.isArray(value) && value.length > 0) {
-        params.set(key, value.join(","));
-      } else if (typeof value === "string" && value) {
-        params.set(key, value);
-      } else if (typeof value === "boolean") {
-        params.set(key, value.toString());
+      Object.entries(searchFilters).forEach(([key, value]) => {
+        if (Array.isArray(value) && value.length > 0) {
+          params.set(key, value.join(","));
+        } else if (typeof value === "string" && value) {
+          params.set(key, value);
+        } else if (typeof value === "boolean") {
+          params.set(key, value.toString());
+        }
+      });
+
+      const newUrl = params.toString()
+        ? `/search?${params.toString()}`
+        : "/search";
+      router.replace(newUrl);
+    },
+    [router],
+  );
+
+  // Fonction pour appliquer automatiquement la recherche par nom
+  const applySearchQuery = useCallback(
+    (searchQuery: string) => {
+      const newFilters = { ...filters, searchQuery };
+      setFilters(newFilters);
+      updateUrl(newFilters);
+    },
+    [filters, setFilters, updateUrl],
+  );
+
+  // Gestion de la recherche automatique avec debounce
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      updateTempFilter("searchQuery", value);
+
+      // Clear le timeout précédent
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
-    });
 
-    const newUrl = params.toString()
-      ? `/search?${params.toString()}`
-      : "/search";
-    router.replace(newUrl);
-  };
+      // Déclencher la recherche après 300ms de pause
+      searchTimeoutRef.current = setTimeout(() => {
+        applySearchQuery(value);
+      }, 300);
+    },
+    [updateTempFilter, applySearchQuery],
+  );
+
+  // Cleanup du timeout
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // removes URL params
   const resetFilters = () => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
     originalResetFilters();
     router.replace("/search");
   };
 
-  // updates URL
+  // updates URL pour les filtres du drawer (excluant la recherche par nom)
   const applyFilters = () => {
     originalApplyFilters();
-    updateUrl(tempFilters);
+    const filtersWithoutSearch = { ...tempFilters };
+    // On garde la recherche actuelle qui a déjà été appliquée
+    filtersWithoutSearch.searchQuery = filters.searchQuery;
+    updateUrl(filtersWithoutSearch);
   };
 
-  // TODO opti
   useEffect(() => {
     const urlFilters: Partial<SearchFilters> = {};
 
@@ -112,60 +151,44 @@ export default function Search() {
       setTempFilters(urlFilters);
       setFilters(urlFilters);
     }
-  }, [searchParams, setTempFilters]);
+  }, [searchParams, setTempFilters, setFilters]);
 
-  const filteredRiders = hasActiveFilters
-    ? riders.filter((rider) => {
-        if (
-          filters.searchQuery &&
-          !rider.name.toLowerCase().includes(filters.searchQuery.toLowerCase())
-        ) {
-          return false;
-        }
-
-        if (
-          filters.sports &&
-          filters.sports.length > 0 &&
-          !filters.sports.includes(rider.sport)
-        ) {
-          return false;
-        }
-
-        if (
-          filters.countries &&
-          filters.countries.length > 0 &&
-          rider.country &&
-          !filters.countries.includes(rider.country)
-        ) {
-          return false;
-        }
-
-        // TODO ajouter tous les filtres
-
-        return true;
-      })
-    : [];
+  const filteredRiders = filterRiders(riders, filters, hasActiveFilters);
 
   return (
     <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold mb-6">Rechercher des riders</h1>
-
       <div className="flex justify-between items-center mb-6">
-        <EnhancedFilterDrawer
-          filters={filters}
-          tempFilters={tempFilters}
-          updateTempFilter={updateTempFilter}
-          setTempFilters={setTempFilters}
-          hasActiveFilters={hasActiveFilters}
-          resetFilters={resetFilters}
-          applyFilters={applyFilters}
-          filterOptions={filterOptions}
-          savedSearches={savedSearches}
-          saveCurrentSearch={saveCurrentSearch}
-          loadSavedSearch={loadSavedSearch}
-          deleteSavedSearchById={deleteSavedSearchById}
-          isCreatingSavedSearch={isCreatingSavedSearch}
-        />
+        <h1 className="text-2xl font-bold">Rechercher des riders</h1>
+
+        <div className="flex items-center gap-4">
+          {/* Barre de recherche avec recherche automatique */}
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un rider..."
+              value={tempFilters.searchQuery || ""}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-8 w-64"
+            />
+          </div>
+
+          <EnhancedFilterDrawer
+            ref={drawerRef}
+            filters={filters}
+            tempFilters={tempFilters}
+            updateTempFilter={updateTempFilter}
+            setTempFilters={setTempFilters}
+            hasActiveFilters={hasActiveFilters}
+            resetFilters={resetFilters}
+            applyFilters={applyFilters}
+            filterOptions={filterOptions}
+            savedSearches={savedSearches}
+            saveCurrentSearch={saveCurrentSearch}
+            loadSavedSearch={loadSavedSearch}
+            deleteSavedSearchById={deleteSavedSearchById}
+            isCreatingSavedSearch={isCreatingSavedSearch}
+          />
+        </div>
       </div>
 
       <div className="mt-6">
@@ -184,11 +207,13 @@ export default function Search() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">
-              Aucun rider ne correspond à votre recherche
-            </p>
-          </div>
+          <NoResultsCard
+            onModifySearch={() => {
+              drawerRef.current?.openDrawer();
+            }}
+            onResetFilters={resetFilters}
+            activeFilters={getActiveFilters(filters)}
+          />
         )}
       </div>
     </div>

@@ -4,6 +4,21 @@ import { Separator } from "@/src/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar"
 import { user } from "@/src/config/user"
 import { Input } from "@/src/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/components/ui/select"
+
+const username = user.firstname + ' ' + user.lastname;
+
+const capitalize = (val: string) => {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
 
 export default function Account() {
   return (
@@ -12,25 +27,116 @@ export default function Account() {
       <div className="flex items-center gap-4">
         <Avatar className="w-20 h-20">
           <AvatarImage src={user.avatar}/>
-          <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+          <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-xl font-semibold">{user.name}</h2>
+          <h2 className="text-xl font-semibold">{capitalize(user.firstname) + '  ' + capitalize(user.lastname)}</h2>
           <p className="text-sm text-muted-foreground pt-2 cursor-pointer hover:underline" onClick={() => console.log("Edit profile picture")}>
            Edit profile picture
           </p>
         </div>
       </div>
       <Separator />
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-base">Name</h2>
-          <Input placeholder={user.name} type="text" onChange={(e) => console.log(e.target.value)} className="w-1/3" />
-        </div>          
-        <div className="flex flex-col gap-2">
-          <h2 className="text-base">Email</h2>
-          <Input placeholder={user.email} type="email" onChange={(e) => console.log(e.target.value)} className="w-1/3" />
+      <div className="grid grid-cols-2 items-center gap-12">
+        <div className="grid grid-rows-1 gap-4">
+          {/* Last name */}
+          <div className="flex flex-col gap-1">
+            <h2 className="text-sm font-semibold">Last name</h2>
+            <Input placeholder={user.lastname} type="text" onChange={(e) => console.log(e.target.value)} />
+          </div>
+          {/* Address */}
+          <div className="flex flex-col gap-1">
+            <h2 className="text-sm font-semibold">Address</h2>
+            <Input placeholder={user.address} type="text" onChange={(e) => console.log(e.target.value)} />
+          </div>
+          {/* Contact */}
+          <div className="flex flex-col gap-1">
+            <h2 className="text-sm font-semibold">Contact</h2>
+            <Input placeholder={user.number} type="text" onChange={(e) => console.log(e.target.value)} />
+          </div>
+          {/* Timezone */}
+          <div className="flex flex-col gap-1">
+            <h2 className="text-sm font-semibold">Timezone</h2>
+            <Select defaultValue="cet" onValueChange={(value) => console.log(value)}>
+              <SelectTrigger className="w-[280px]">
+                <SelectValue placeholder="Select a timezone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>North America</SelectLabel>
+                  <SelectItem value="est">Eastern Standard Time (EST)</SelectItem>
+                  <SelectItem value="cst">Central Standard Time (CST)</SelectItem>
+                  <SelectItem value="mst">Mountain Standard Time (MST)</SelectItem>
+                  <SelectItem value="pst">Pacific Standard Time (PST)</SelectItem>
+                  <SelectItem value="akst">Alaska Standard Time (AKST)</SelectItem>
+                  <SelectItem value="hst">Hawaii Standard Time (HST)</SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Europe & Africa</SelectLabel>
+                  <SelectItem value="gmt">Greenwich Mean Time (GMT)</SelectItem>
+                  <SelectItem value="cet">Central European Time (CET)</SelectItem>
+                  <SelectItem value="eet">Eastern European Time (EET)</SelectItem>
+                  <SelectItem value="west">
+                    Western European Summer Time (WEST)
+                  </SelectItem>
+                  <SelectItem value="cat">Central Africa Time (CAT)</SelectItem>
+                  <SelectItem value="eat">East Africa Time (EAT)</SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Asia</SelectLabel>
+                  <SelectItem value="msk">Moscow Time (MSK)</SelectItem>
+                  <SelectItem value="ist">India Standard Time (IST)</SelectItem>
+                  <SelectItem value="cst_china">China Standard Time (CST)</SelectItem>
+                  <SelectItem value="jst">Japan Standard Time (JST)</SelectItem>
+                  <SelectItem value="kst">Korea Standard Time (KST)</SelectItem>
+                  <SelectItem value="ist_indonesia">
+                    Indonesia Central Standard Time (WITA)
+                  </SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Australia & Pacific</SelectLabel>
+                  <SelectItem value="awst">
+                    Australian Western Standard Time (AWST)
+                  </SelectItem>
+                  <SelectItem value="acst">
+                    Australian Central Standard Time (ACST)
+                  </SelectItem>
+                  <SelectItem value="aest">
+                    Australian Eastern Standard Time (AEST)
+                  </SelectItem>
+                  <SelectItem value="nzst">New Zealand Standard Time (NZST)</SelectItem>
+                  <SelectItem value="fjt">Fiji Time (FJT)</SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>South America</SelectLabel>
+                  <SelectItem value="art">Argentina Time (ART)</SelectItem>
+                  <SelectItem value="bot">Bolivia Time (BOT)</SelectItem>
+                  <SelectItem value="brt">Brasilia Time (BRT)</SelectItem>
+                  <SelectItem value="clt">Chile Standard Time (CLT)</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>          
+          </div>
         </div>
+        
+        <div className="grid grid-rows-1 gap-4">
+          {/* First name */}
+          <div className="flex flex-col gap-1">
+            <h2 className="text-sm font-semibold">First name</h2>
+            <Input placeholder={user.firstname} type="text" onChange={(e) => console.log(e.target.value)} />
+          </div>
+          {/* City */}
+          <div className="flex flex-col gap-1">
+            <h2 className="text-sm font-semibold">City</h2>
+            <Input placeholder={user.city + ', ' + user.country} type="text" onChange={(e) => console.log(e.target.value)} />
+          </div>
+         {/* Email */}
+          <div className="flex flex-col gap-1">
+            <h2 className="text-sm font-semibold">Email</h2>
+            <Input placeholder={user.email} type="text" onChange={(e) => console.log(e.target.value)} />
+          </div>
+        </div>
+
       </div>
     </>
   );

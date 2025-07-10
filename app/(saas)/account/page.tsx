@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select"
+import { Button } from "@/src/components/ui/button"
 
 const username = user.firstname + ' ' + user.lastname;
 
@@ -37,8 +38,8 @@ export default function Account() {
         </div>
       </div>
       <Separator />
-      <div className="grid grid-cols-2 items-center gap-12">
-        <div className="grid grid-rows-1 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 items-start gap-12">
+        <div className="grid grid-cols-1 gap-4 sm:grid-rows-1">
           {/* Last name */}
           <div className="flex flex-col gap-1">
             <h2 className="text-sm font-semibold">Last name</h2>
@@ -46,8 +47,8 @@ export default function Account() {
           </div>
           {/* Address */}
           <div className="flex flex-col gap-1">
-            <h2 className="text-sm font-semibold">Address</h2>
-            <Input placeholder={user.address} type="text" onChange={(e) => console.log(e.target.value)} />
+            <h2 className="text-sm font-semibold">First name</h2>
+            <Input placeholder={user.firstname} type="text" onChange={(e) => console.log(e.target.value)} />
           </div>
           {/* Contact */}
           <div className="flex flex-col gap-1">
@@ -55,7 +56,7 @@ export default function Account() {
             <Input placeholder={user.number} type="text" onChange={(e) => console.log(e.target.value)} />
           </div>
           {/* Timezone */}
-          <div className="flex flex-col gap-1">
+          <div>
             <h2 className="text-sm font-semibold">Timezone</h2>
             <Select defaultValue="cet" onValueChange={(value) => console.log(value)}>
               <SelectTrigger className="w-[280px]">
@@ -117,13 +118,18 @@ export default function Account() {
               </SelectContent>
             </Select>          
           </div>
+
+          {/* Save */}
+          <Button className="w-1/4 px-[4rem] mt-2" onClick={() => console.log("Save changes")}>
+            Save changes
+          </Button>
         </div>
         
         <div className="grid grid-rows-1 gap-4">
-          {/* First name */}
+          {/* Address */}
           <div className="flex flex-col gap-1">
-            <h2 className="text-sm font-semibold">First name</h2>
-            <Input placeholder={user.firstname} type="text" onChange={(e) => console.log(e.target.value)} />
+            <h2 className="text-sm font-semibold">Address</h2>
+            <Input placeholder={user.address} type="text" onChange={(e) => console.log(e.target.value)} />
           </div>
           {/* City */}
           <div className="flex flex-col gap-1">

@@ -1,9 +1,7 @@
 "use client";
 
-import { riders } from "@/src/lib/dashboard.lib";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useCallback } from "react";
-import RiderCard from "@/src/widget/rider/card";
 import {
   EnhancedFilterDrawer,
   EnhancedFilterDrawerRef,
@@ -19,6 +17,13 @@ import {
   getActiveFilters,
   filterRiders,
 } from "@/src/lib/scouting/scouting.lib";
+import { useGetRiders } from "@/src/entities/riders/riders.hook";
+import { Skeleton } from "@/src/components/ui/skeleton";
+import {
+  RidersErrorCard,
+  RidersLoadingSkeleton,
+  RiderCard,
+} from "@/src/widget/rider/card";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -26,6 +31,13 @@ export default function SearchPage() {
   const { data: user } = AuthenticationHooks.useMe();
   const drawerRef = useRef<EnhancedFilterDrawerRef>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const {
+    data: riders,
+    error: ridersError,
+    isLoading: ridersLoading,
+    mutate: retryRiders,
+  } = useGetRiders();
 
   // hook filters
   const {
@@ -153,7 +165,45 @@ export default function SearchPage() {
     }
   }, [searchParams, setTempFilters, setFilters]);
 
-  const filteredRiders = filterRiders(riders, filters, hasActiveFilters);
+  // Filtrage des riders avec gestion du loading
+  const filteredRiders =
+    riders && hasActiveFilters
+      ? filterRiders(riders, filters, hasActiveFilters)
+      : [];
+
+  // Gestion des états de chargement et d'erreur
+  if (ridersLoading) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Rechercher des riders</h1>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher un rider..."
+                disabled
+                className="pl-8 w-64"
+              />
+            </div>
+            <Skeleton className="h-10 w-20" />
+          </div>
+        </div>
+        <RidersLoadingSkeleton />
+      </div>
+    );
+  }
+
+  if (ridersError) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Rechercher des riders</h1>
+        </div>
+        <RidersErrorCard onRetry={() => retryRiders()} />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-6">
@@ -166,7 +216,7 @@ export default function SearchPage() {
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Rechercher un rider..."
-              value={tempFilters.searchQuery || ""}
+              value={tempFilters.searchQuery ?? ""}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-8 w-64"
             />
@@ -202,8 +252,8 @@ export default function SearchPage() {
           <EmptyStateCard />
         ) : filteredRiders.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredRiders.map((rider) => (
-              <RiderCard key={rider.id} rider={rider} />
+            {filteredRiders.map((rider, index) => (
+              <RiderCard key={index} rider={rider} />
             ))}
           </div>
         ) : (

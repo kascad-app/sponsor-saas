@@ -7,19 +7,28 @@ import { MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useFavorites } from "@/src/contexts/favorites-context";
-import { Rider } from "@/src/lib/dashboard.lib";
+import { Rider } from "@kascad-app/shared-types";
+import { KascadLogo } from "@/src/shared/ui/Kascad-logo.ui";
 
 // Rider Card Component
-const RiderCard = ({ rider }: { rider: Rider }) => {
+export const RiderCard = ({ rider }: { rider: Rider }) => {
   const { isFavorite } = useFavorites();
 
   const getSportImage = (sport: string) => {
-    switch (sport.toLowerCase()) {
-      case "bmx":
+    switch (sport) {
+      case "BMX":
         return "/bannerBmx.jpg";
-      case "mountain biking":
+      case "VTT":
+      case "VTT de descente":
+      case "Cyclisme":
+      case "Cyclisme sur route":
+      case "Enduro":
+      case "Freeride":
         return "/bannerMountainBike.png";
-      case "skate":
+      case "Skateboard":
+      case "Longboard":
+      case "Roller":
+      case "Trottinette":
         return "/bannerSkate.jpg";
       default:
         return "/bannerMountainBike.png";
@@ -27,16 +36,27 @@ const RiderCard = ({ rider }: { rider: Rider }) => {
   };
 
   return (
-    <Link href={`/details-rider/${rider.id}`}>
+    <Link href={`/details-rider/${rider.identifier.slug}`}>
       <Card className="hover:shadow-md transition-shadow overflow-hidden h-full">
         <div className="relative h-40 w-full">
-          <Image
-            src={getSportImage(rider.sport)}
-            alt={rider.name}
-            fill
-            className="object-cover"
-          />
-          {isFavorite(rider.id) && (
+          {rider.preferences && rider.preferences.sports.length > 0 ? (
+            <Image
+              src={getSportImage(
+                rider.preferences.sports.map((sport) => sport.name).join(", "),
+              )}
+              alt={rider.preferences.sports
+                .map((sport) => sport.name)
+                .join(", ")}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <KascadLogo />
+            </div>
+          )}
+
+          {isFavorite(rider.identifier.slug) && (
             <div className="absolute top-2 right-2">
               <Badge className="bg-red-500">Favoris</Badge>
             </div>
@@ -46,7 +66,7 @@ const RiderCard = ({ rider }: { rider: Rider }) => {
           <div className="flex items-center gap-3 mb-2">
             <Avatar className="h-10 w-10">
               <AvatarFallback>
-                {rider.name
+                {rider.identity?.firstName
                   .split(" ")
                   .map((n) => n[0])
                   .join("")
@@ -55,30 +75,34 @@ const RiderCard = ({ rider }: { rider: Rider }) => {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-medium">{rider.name}</h3>
+              <h3 className="font-medium">
+                {rider.identity?.firstName} {rider.identity?.lastName}
+              </h3>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Badge variant="outline" className="text-xs">
-                  {rider.sport}
+                  {rider.preferences && rider.preferences.sports.length > 0
+                    ? rider.preferences.sports[0].name
+                    : "Aucun sport"}
                 </Badge>
                 <Badge
                   className={
-                    rider.status === "active"
+                    rider.status?.status === "active"
                       ? "bg-green-100 text-green-800 hover:bg-green-100"
                       : "bg-red-100 text-red-800 hover:bg-red-100"
                   }
                 >
-                  {rider.status === "active" ? "Actif" : "Inactif"}
+                  {rider.status?.status === "active" ? "Actif" : "Inactif"}
                 </Badge>
               </div>
             </div>
           </div>
 
-          {(rider.city || rider.country) && (
+          {(rider.identity?.city || rider.identity?.country) && (
             <div className="flex items-center text-xs text-muted-foreground mt-2">
               <MapPin className="h-3 w-3 mr-1" />
-              {rider.city && rider.country
-                ? `${rider.city}, ${rider.country}`
-                : rider.city || rider.country}
+              {rider.identity?.city && rider.identity?.country
+                ? `${rider.identity?.city}, ${rider.identity?.country}`
+                : rider.identity?.city || rider.identity?.country}
             </div>
           )}
 
@@ -90,5 +114,3 @@ const RiderCard = ({ rider }: { rider: Rider }) => {
     </Link>
   );
 };
-
-export default RiderCard;

@@ -7,9 +7,13 @@ import { mutate } from "swr";
 import { toast } from "sonner";
 
 export const useSearchFilters = (userId?: string) => {
-  // filtres actuels
-  const [filters, setFilters] = useState<SearchFilters>({});
-  const [tempFilters, setTempFilters] = useState<SearchFilters>({});
+  // filtres actuels avec initialisation par défaut
+  const [filters, setFilters] = useState<SearchFilters>({
+    searchQuery: "",
+  });
+  const [tempFilters, setTempFilters] = useState<SearchFilters>({
+    searchQuery: "",
+  });
 
   const { data: rawSavedSearches, isLoading } = useSavedSearches(userId || "");
   const { trigger: createSavedSearch, isMutating: isCreating } =

@@ -7,120 +7,71 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
-import { Heart, Search, Users, Bike, Zap, Target } from "lucide-react";
+import { Heart, Search, Users } from "lucide-react";
 import Link from "next/link";
 import { useFavorites } from "@/src/contexts/favorites-context";
-import { riders } from "@/src/lib/dashboard.lib";
-import { sports } from "@/src/components/utils/filters-datatable";
-import Image from "next/image";
-import RiderCard from "@/src/widget/rider/card";
+import { RiderCard, RidersLoadingSkeleton } from "@/src/widget/rider/card";
+import { useGetRiders } from "@/src/entities/riders/riders.hook";
+import { Skeleton } from "@/src/components/ui/skeleton";
+import { useMemo } from "react";
 
 // Simuler user connecté replace avec l'auth
 const currentUser = {
   name: "Lucas Huerta",
 };
 
-// TODO a retravailler
-const SportCard = ({ sport }: { sport: string }) => {
-  const getSportImage = (sportName: string) => {
-    switch (sportName.toLowerCase()) {
-      case "bmx":
-        return "/bannerBmx.jpg";
-      case "mountain biking":
-        return "/bannerMountainBike.png";
-      case "skateboard":
-      case "skate":
-        return "/bannerSkate.jpg";
-      default:
-        return "/bannerMountainBike.jpg";
-    }
-  };
-
-  const getSportIcon = (sportName: string) => {
-    switch (sportName.toLowerCase()) {
-      case "bmx":
-      case "mountain biking":
-      case "road cycling":
-        return Bike;
-      case "skateboard":
-      case "skate":
-        return Zap;
-      default:
-        return Target;
-    }
-  };
-
-  const getSportColor = (sportName: string) => {
-    switch (sportName.toLowerCase()) {
-      case "bmx":
-        return "text-orange-600";
-      case "mountain biking":
-        return "text-green-600";
-      case "road cycling":
-        return "text-blue-600";
-      case "skateboard":
-      case "skate":
-        return "text-purple-600";
-      case "surf":
-        return "text-cyan-600";
-      default:
-        return "text-gray-600";
-    }
-  };
-
-  const ridersCount = riders.filter((rider) => rider.sport === sport).length;
-  const SportIcon = getSportIcon(sport);
-
-  return (
-    <Link href={`/search?sport=${encodeURIComponent(sport)}`}>
-      <Card className="hover:shadow-md transition-shadow overflow-hidden h-full cursor-pointer">
-        <div className="relative h-24 w-full">
-          <Image
-            src={getSportImage(sport)}
-            alt={sport}
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="absolute bottom-2 left-2 text-white">
-            <SportIcon className="h-6 w-6" />
-          </div>
-        </div>
-        <CardContent className="p-4">
-          <div className="text-center">
-            <h3 className={`font-semibold text-lg ${getSportColor(sport)}`}>
-              {sport}
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              {ridersCount} rider{ridersCount > 1 ? "s" : ""} disponible
-              {ridersCount > 1 ? "s" : ""}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-};
-
 export default function Dashboard() {
   const { favorites } = useFavorites();
+  const {
+    data: riders,
+    isLoading: ridersLoading,
+    error: ridersError,
+  } = useGetRiders();
 
-  // Calculer les riders signés (actifs)
-  const signedRiders = riders.filter((rider) => rider.status === "active");
+  // Calculer les stats
+  const dashboardStats = useMemo(() => {
+    if (!riders)
+      return {
+        signedRiders: 0,
+        favoriteRiders: 0,
+        newRiders: [],
+        sportsCounts: {},
+      };
 
-  // Obtenir les riders favoris
-  const favoriteRiders = riders.filter((rider) => favorites.includes(rider.id));
+    // Riders disponibles
+    const availableRiders = riders.filter(
+      (rider) => rider.availibility.isAvailable,
+    );
 
-  // Obtenir les nouveaux riders (les plus récemment inscrits)
-  const newRiders = riders
-    .sort(
-      (a, b) =>
-        new Date(b.joinedDate).getTime() - new Date(a.joinedDate).getTime(),
-    )
-    .slice(0, 4);
+    // Riders favoris
+    const favoriteRiders = riders.filter((rider) =>
+      favorites.includes(rider._id),
+    );
 
-  // Filtrer les sports pour exclure "Tous les sports"
-  const availableSports = sports.filter((sport) => sport !== "Tous les sports");
+    // Les 3 riders les plus récents createdA
+    const newRiders = riders
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt || 0).getTime() -
+          new Date(a.createdAt || 0).getTime(),
+      )
+      .slice(0, 3);
+
+    const sportsCounts: Record<string, number> = {};
+    riders.forEach((rider) => {
+      rider.preferences.sports.forEach((sport) => {
+        const sportName = typeof sport === "string" ? sport : sport.name;
+        sportsCounts[sportName] = (sportsCounts[sportName] || 0) + 1;
+      });
+    });
+
+    return {
+      signedRiders: availableRiders.length,
+      favoriteRiders: favoriteRiders.length,
+      newRiders,
+      sportsCounts,
+    };
+  }, [riders, favorites]);
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col">
@@ -146,15 +97,19 @@ export default function Dashboard() {
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Users className="h-5 w-5 text-blue-600" />
-                Riders Signés
+                Riders Disponibles
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0 flex-1 flex flex-col justify-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">
-                {signedRiders.length}
-              </div>
+              {ridersLoading ? (
+                <Skeleton className="h-12 w-20 mb-2" />
+              ) : (
+                <div className="text-4xl font-bold text-blue-600 mb-2">
+                  {dashboardStats.signedRiders}
+                </div>
+              )}
               <p className="text-sm text-muted-foreground">
-                Riders actifs sur la plateforme
+                Riders disponibles sur la plateforme
               </p>
             </CardContent>
           </Card>
@@ -168,13 +123,17 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0 flex-1 flex flex-col justify-center">
-              <div className="text-4xl font-bold text-red-600 mb-2">
-                {favoriteRiders.length}
-              </div>
+              {ridersLoading ? (
+                <Skeleton className="h-12 w-20 mb-2" />
+              ) : (
+                <div className="text-4xl font-bold text-red-600 mb-2">
+                  {dashboardStats.favoriteRiders}
+                </div>
+              )}
               <p className="text-sm text-muted-foreground mb-3">
                 Riders dans vos favoris
               </p>
-              {favoriteRiders.length === 0 && (
+              {!ridersLoading && dashboardStats.favoriteRiders === 0 && (
                 <Link href="/search">
                   <Button size="sm" variant="outline" className="w-full">
                     Découvrir des riders
@@ -185,44 +144,38 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Section Sports Disponibles */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Sports Disponibles</h2>
-            <Link
-              href={`/search?sport=${encodeURIComponent(
-                availableSports.join(","),
-              )}`}
-            >
-              <Button variant="outline" size="sm">
-                Voir tous
-              </Button>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {availableSports.map((sport) => (
-              <SportCard key={sport} sport={sport} />
-            ))}
-          </div>
-        </div>
-
-        {/* Section Nouveaux Riders */}
+        {/* Section Nouveaux Riders - Limité à 3 */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Nouveaux Riders</h2>
-            <Link href="/search?showAll=true">
+            <Link href="/search">
               <Button variant="outline" size="sm">
                 Voir tous
               </Button>
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            {newRiders.map((rider) => (
-              <RiderCard key={rider.id} rider={rider} />
-            ))}
-          </div>
+          {ridersLoading ? (
+            <RidersLoadingSkeleton />
+          ) : ridersError ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">
+                Erreur lors du chargement des riders
+              </p>
+            </div>
+          ) : dashboardStats.newRiders.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {dashboardStats.newRiders.map((rider, key) => (
+                <RiderCard key={key} rider={rider} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">
+                Aucun nouveau rider récemment
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

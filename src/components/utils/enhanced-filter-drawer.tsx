@@ -263,7 +263,7 @@ export const EnhancedFilterDrawer = forwardRef<
             <Label className="text-xs text-muted-foreground">Date min</Label>
             <Input
               type="date"
-              value={tempFilters.maxBirthdate || ""}
+              value={tempFilters.maxBirthdate ?? ""}
               onChange={(e) => updateTempFilter("maxBirthdate", e.target.value)}
               max={
                 new Date(Date.now() - 18 * 365 * 24 * 60 * 60 * 1000)
@@ -276,7 +276,7 @@ export const EnhancedFilterDrawer = forwardRef<
             <Label className="text-xs text-muted-foreground">Date max</Label>
             <Input
               type="date"
-              value={tempFilters.minBirthdate || ""}
+              value={tempFilters.minBirthdate ?? ""}
               onChange={(e) => updateTempFilter("minBirthdate", e.target.value)}
               max={
                 new Date(Date.now() - 18 * 365 * 24 * 60 * 60 * 1000)

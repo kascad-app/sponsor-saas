@@ -34,8 +34,8 @@ export const NAVIGATION: AppNavigation = {
       icon: Search,
     },
     {
-      title: "My contracts",
-      url: "/contracts",
+      title: "Shortlist",
+      url: "/shortlist",
       icon: File,
     },
     {

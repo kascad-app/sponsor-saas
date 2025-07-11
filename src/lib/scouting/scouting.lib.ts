@@ -1,4 +1,5 @@
 import { SearchFilters } from "@/src/entities/scouting/scouting.types";
+import { Rider } from "@kascad-app/shared-types";
 
 // Get active filters for display
 export const getActiveFilters = (filters: SearchFilters) => {
@@ -23,42 +24,34 @@ export const getActiveFilters = (filters: SearchFilters) => {
 };
 
 // Filter riders based on search criteria
-export const filterRiders = <
-  T extends {
-    name: string;
-    sport: string;
-    country?: string;
-    gender?: string;
-    languages?: string[];
-    socials?: string[];
-    contractType?: string;
-    isBeenSponsored?: boolean;
-    isDisponible?: boolean;
-    birthdate?: string;
-  },
->(
-  riders: T[],
+export const filterRiders = (
+  riders: Rider[],
   filters: SearchFilters,
   hasActiveFilters: boolean,
-): T[] => {
+): Rider[] => {
   if (!hasActiveFilters) {
     return [];
   }
 
   return riders.filter((rider) => {
-    // Recherche par nom
-    if (
-      filters.searchQuery &&
-      !rider.name.toLowerCase().includes(filters.searchQuery.toLowerCase())
-    ) {
-      return false;
+    // Recherche par nom (firstName + lastName)
+    if (filters.searchQuery) {
+      const fullName =
+        `${rider.identity.firstName} ${rider.identity.lastName}`.toLowerCase();
+      if (!fullName.includes(filters.searchQuery.toLowerCase())) {
+        return false;
+      }
     }
 
     // Filtrage par sports
     if (
       filters.sports &&
       filters.sports.length > 0 &&
-      !filters.sports.includes(rider.sport)
+      !filters.sports.some((sport) =>
+        rider.preferences.sports.some(
+          (riderSport) => riderSport.name === sport,
+        ),
+      )
     ) {
       return false;
     }
@@ -67,8 +60,7 @@ export const filterRiders = <
     if (
       filters.countries &&
       filters.countries.length > 0 &&
-      rider.country &&
-      !filters.countries.includes(rider.country)
+      !filters.countries.includes(rider.identity.country)
     ) {
       return false;
     }
@@ -77,8 +69,7 @@ export const filterRiders = <
     if (
       filters.gender &&
       filters.gender.length > 0 &&
-      rider.gender &&
-      !filters.gender.includes(rider.gender)
+      !filters.gender.includes(rider.identity.gender)
     ) {
       return false;
     }
@@ -87,8 +78,9 @@ export const filterRiders = <
     if (
       filters.languages &&
       filters.languages.length > 0 &&
-      rider.languages &&
-      !filters.languages.some((lang) => rider.languages?.includes(lang))
+      !filters.languages.some((lang) =>
+        rider.identity.languageSpoken.includes(lang),
+      )
     ) {
       return false;
     }
@@ -97,8 +89,9 @@ export const filterRiders = <
     if (
       filters.socials &&
       filters.socials.length > 0 &&
-      rider.socials &&
-      !filters.socials.some((social) => rider.socials?.includes(social))
+      !filters.socials.some((social) =>
+        rider.preferences.networks.some((network) => network === social),
+      )
     ) {
       return false;
     }
@@ -107,31 +100,30 @@ export const filterRiders = <
     if (
       filters.contractType &&
       filters.contractType.length > 0 &&
-      rider.contractType &&
-      !filters.contractType.includes(rider.contractType)
+      !filters.contractType.includes(rider.availibility.contractType)
     ) {
       return false;
     }
 
-    // Filtrage par statut de sponsoring
-    if (
-      filters.isBeenSponsored !== undefined &&
-      rider.isBeenSponsored !== filters.isBeenSponsored
-    ) {
-      return false;
+    // Filtrage par statut de sponsoring (déduire du nombre de sponsors actuels)
+    if (filters.isBeenSponsored !== undefined) {
+      const hasBeenSponsored = rider.sponsorSummary.totalSponsors > 0;
+      if (hasBeenSponsored !== filters.isBeenSponsored) {
+        return false;
+      }
     }
 
     // Filtrage par disponibilité
     if (
       filters.isDisponible !== undefined &&
-      rider.isDisponible !== filters.isDisponible
+      rider.availibility.isAvailable !== filters.isDisponible
     ) {
       return false;
     }
 
     // Filtrage par âge (date de naissance)
-    if (rider.birthdate) {
-      const riderBirthDate = new Date(rider.birthdate);
+    if (filters.minBirthdate || filters.maxBirthdate) {
+      const riderBirthDate = new Date(rider.identity.birthDate);
 
       if (filters.minBirthdate) {
         const minDate = new Date(filters.minBirthdate);

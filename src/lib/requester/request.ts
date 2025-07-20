@@ -32,8 +32,13 @@ const request = async <TData>(
     );
   }
 
-  const data: TData = await response.json();
-  return data;
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    const data: TData = await response.json();
+    return data;
+  }
+
+  return {} as TData;
 };
 
 export type { FetchOptions as ApiRequestConfig };

@@ -29,7 +29,7 @@ export default function LoginLayout({
         <Image
           src="/auth/kascad_login.webp"
           alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+          className="absolute inset-0 h-full w-full object-cover"
           width={1000}
           height={1000}
         />

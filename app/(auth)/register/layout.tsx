@@ -20,7 +20,7 @@ export default function RegisterLayout({
           alt="Image"
           width={1000}
           height={1000}
-          className="absolute inset-0 h-full w-full object-cover object-center dark:brightness-[0.2] dark:grayscale"
+          className="absolute inset-0 h-full w-full object-cover object-center"
         />
       </div>
       <div className="flex flex-col gap-4 p-6 md:p-10">

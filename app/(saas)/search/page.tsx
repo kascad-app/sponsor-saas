@@ -1,163 +1,271 @@
 "use client";
 
-import { Rider, riders } from "@/src/lib/dashboard.lib";
-import { Card, CardContent } from "@/src/components/ui/card";
-import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
-import { Badge } from "@/src/components/ui/badge";
-import { MapPin } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useCallback } from "react";
 import {
-  useFilters,
-  Filters,
-  sports,
-  statuses,
-} from "@/src/components/utils/filters-datatable";
-import Image from "next/image";
-import Link from "next/link";
-import { useFavorites } from "@/src/contexts/favorites-context";
+  EnhancedFilterDrawer,
+  EnhancedFilterDrawerRef,
+} from "@/src/components/utils/enhanced-filter-drawer";
+import { useSearchFilters } from "@/src/entities/scouting/use-search-filters";
+import { AuthenticationHooks } from "@/src/entities/authentication";
+import { SearchFilters } from "@/src/entities/scouting/scouting.types";
+import { Input } from "@/src/components/ui/input";
+import { Search } from "lucide-react";
+import { NoResultsCard } from "@/src/widget/scouting/no-result-card";
+import { EmptyStateCard } from "@/src/widget/scouting/empty-state-card";
+import {
+  getActiveFilters,
+  filterRiders,
+} from "@/src/lib/scouting/scouting.lib";
+import { useGetRiders } from "@/src/entities/riders/riders.hook";
+import { Skeleton } from "@/src/components/ui/skeleton";
+import {
+  RidersErrorCard,
+  RidersLoadingSkeleton,
+  RiderCard,
+} from "@/src/widget/rider/card";
 
-// Rider Card Component
-const RiderCard = ({ rider }: { rider: Rider }) => {
-  const { isFavorite } = useFavorites();
+export default function SearchPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { data: user } = AuthenticationHooks.useMe();
+  const drawerRef = useRef<EnhancedFilterDrawerRef>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const getSportImage = (sport: string) => {
-    switch (sport.toLowerCase()) {
-      case "bmx":
-        return "/bannerBmx.jpg";
-      case "mountain biking":
-        return "/bannerMountainBike.png";
-      case "skate":
-        return "/bannerSkate.jpg";
-      default:
-        return "/bannerMountainBike.jpg";
+  console.log("user connectéd", user);
+
+  const {
+    data: riders,
+    error: ridersError,
+    isLoading: ridersLoading,
+    mutate: retryRiders,
+  } = useGetRiders();
+
+  // hook filters
+  const {
+    filters,
+    tempFilters,
+    setTempFilters,
+    updateTempFilter,
+    resetFilters: originalResetFilters,
+    applyFilters: originalApplyFilters,
+    hasActiveFilters,
+    savedSearches,
+    saveCurrentSearch,
+    loadSavedSearch,
+    deleteSavedSearchById,
+    isCreatingSavedSearch,
+    filterOptions,
+    setFilters,
+  } = useSearchFilters(user?._id);
+
+  const updateUrl = useCallback(
+    (searchFilters: typeof filters) => {
+      const params = new URLSearchParams();
+
+      Object.entries(searchFilters).forEach(([key, value]) => {
+        if (Array.isArray(value) && value.length > 0) {
+          params.set(key, value.join(","));
+        } else if (typeof value === "string" && value) {
+          params.set(key, value);
+        } else if (typeof value === "boolean") {
+          params.set(key, value.toString());
+        }
+      });
+
+      const newUrl = params.toString()
+        ? `/search?${params.toString()}`
+        : "/search";
+      router.replace(newUrl);
+    },
+    [router],
+  );
+
+  // Fonction pour appliquer automatiquement la recherche par nom
+  const applySearchQuery = useCallback(
+    (searchQuery: string) => {
+      const newFilters = { ...filters, searchQuery };
+      setFilters(newFilters);
+      updateUrl(newFilters);
+    },
+    [filters, setFilters, updateUrl],
+  );
+
+  // Gestion de la recherche automatique avec debounce
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      updateTempFilter("searchQuery", value);
+
+      // Clear le timeout précédent
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      // Déclencher la recherche après 300ms de pause
+      searchTimeoutRef.current = setTimeout(() => {
+        applySearchQuery(value);
+      }, 300);
+    },
+    [updateTempFilter, applySearchQuery],
+  );
+
+  // Cleanup du timeout
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // removes URL params
+  const resetFilters = () => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
+    originalResetFilters();
+    router.replace("/search");
   };
 
-  return (
-    <Link href={`/details-rider/${rider.id}`}>
-      <Card className="hover:shadow-md transition-shadow overflow-hidden h-full">
-        <div className="relative h-40 w-full">
-          <Image
-            src={getSportImage(rider.sport)}
-            alt={rider.name}
-            fill
-            className="object-cover"
-          />
-          {isFavorite(rider.id) && (
-            <div className="absolute top-2 right-2">
-              <Badge className="bg-red-500">Favoris</Badge>
+  // updates URL pour les filtres du drawer (excluant la recherche par nom)
+  const applyFilters = () => {
+    originalApplyFilters();
+    const filtersWithoutSearch = { ...tempFilters };
+    // On garde la recherche actuelle qui a déjà été appliquée
+    filtersWithoutSearch.searchQuery = filters.searchQuery;
+    updateUrl(filtersWithoutSearch);
+  };
+
+  useEffect(() => {
+    const urlFilters: Partial<SearchFilters> = {};
+
+    searchParams.forEach((value, key) => {
+      switch (key) {
+        case "searchQuery":
+        case "minBirthdate":
+        case "maxBirthdate":
+          urlFilters[key] = value;
+          break;
+        case "isBeenSponsored":
+        case "isDisponible":
+          urlFilters[key] = value === "true";
+          break;
+        case "sports":
+        case "countries":
+        case "gender":
+        case "languages":
+        case "socials":
+        case "contractType":
+          urlFilters[key] = value.split(",").filter(Boolean);
+          break;
+      }
+    });
+
+    if (Object.keys(urlFilters).length > 0) {
+      setTempFilters(urlFilters);
+      setFilters(urlFilters);
+    }
+  }, [searchParams, setTempFilters, setFilters]);
+
+  // Filtrage des riders avec gestion du loading
+  const filteredRiders =
+    riders && hasActiveFilters
+      ? filterRiders(riders, filters, hasActiveFilters)
+      : [];
+
+  // Gestion des états de chargement et d'erreur
+  if (ridersLoading) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Rechercher des riders</h1>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher un rider..."
+                disabled
+                className="pl-8 w-64"
+              />
             </div>
-          )}
-        </div>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <Avatar className="h-10 w-10">
-              <AvatarFallback>
-                {rider.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .substring(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-medium">{rider.name}</h3>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Badge variant="outline" className="text-xs">
-                  {rider.sport}
-                </Badge>
-                <Badge
-                  className={
-                    rider.status === "active"
-                      ? "bg-green-100 text-green-800 hover:bg-green-100"
-                      : "bg-red-100 text-red-800 hover:bg-red-100"
-                  }
-                >
-                  {rider.status === "active" ? "Actif" : "Inactif"}
-                </Badge>
-              </div>
-            </div>
+            <Skeleton className="h-10 w-20" />
           </div>
+        </div>
+        <RidersLoadingSkeleton />
+      </div>
+    );
+  }
 
-          {(rider.city || rider.country) && (
-            <div className="flex items-center text-xs text-muted-foreground mt-2">
-              <MapPin className="h-3 w-3 mr-1" />
-              {rider.city && rider.country
-                ? `${rider.city}, ${rider.country}`
-                : rider.city || rider.country}
-            </div>
-          )}
-
-          {rider.description && (
-            <p className="mt-2 text-sm line-clamp-2">{rider.description}</p>
-          )}
-        </CardContent>
-      </Card>
-    </Link>
-  );
-};
-
-export default function Search() {
-  const {
-    searchQuery,
-    setSearchQuery,
-    selectedSport,
-    setSelectedSport,
-    selectedStatus,
-    setSelectedStatus,
-    hasAnyFilter,
-    resetFilters,
-  } = useFilters();
-
-  // Filter riders based on search and filters
-  const filteredRiders = riders.filter((rider) => {
-    const matchesSearch = rider.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesSport =
-      selectedSport === "All Sports" || rider.sport === selectedSport;
-    const matchesStatus =
-      selectedStatus === "All Statuses" ||
-      (selectedStatus === "Active" && rider.status === "active") ||
-      (selectedStatus === "Inactive" && rider.status === "inactive");
-
-    return matchesSearch && matchesSport && matchesStatus;
-  });
+  if (ridersError) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Rechercher des riders</h1>
+        </div>
+        <RidersErrorCard onRetry={() => retryRiders()} />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold mb-6">Rechercher des riders</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Rechercher des riders</h1>
 
-      <Filters
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        selectedSport={selectedSport}
-        setSelectedSport={setSelectedSport}
-        selectedStatus={selectedStatus}
-        setSelectedStatus={setSelectedStatus}
-        sportOptions={sports}
-        statusOptions={statuses}
-        hasAnyFilter={hasAnyFilter}
-        resetFilters={resetFilters}
-      />
+        <div className="flex items-center gap-4">
+          {/* Barre de recherche avec recherche automatique */}
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un rider..."
+              value={tempFilters.searchQuery ?? ""}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-8 w-64"
+            />
+          </div>
+
+          <EnhancedFilterDrawer
+            ref={drawerRef}
+            filters={filters}
+            tempFilters={tempFilters}
+            updateTempFilter={updateTempFilter}
+            setTempFilters={setTempFilters}
+            hasActiveFilters={hasActiveFilters}
+            resetFilters={resetFilters}
+            applyFilters={applyFilters}
+            filterOptions={filterOptions}
+            savedSearches={savedSearches}
+            saveCurrentSearch={saveCurrentSearch}
+            loadSavedSearch={loadSavedSearch}
+            deleteSavedSearchById={deleteSavedSearchById}
+            isCreatingSavedSearch={isCreatingSavedSearch}
+          />
+        </div>
+      </div>
 
       <div className="mt-6">
-        <p className="text-muted-foreground mb-4">
-          {filteredRiders.length} riders trouvés
-        </p>
+        {hasActiveFilters && (
+          <p className="text-muted-foreground mb-4">
+            {filteredRiders.length} riders trouvés
+          </p>
+        )}
 
-        {filteredRiders.length > 0 ? (
+        {!hasActiveFilters ? (
+          <EmptyStateCard />
+        ) : filteredRiders.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredRiders.map((rider) => (
-              <RiderCard key={rider.id} rider={rider} />
+            {filteredRiders.map((rider, index) => (
+              <RiderCard key={index} rider={rider} />
             ))}
           </div>
         ) : (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">
-              Aucun rider ne correspond à votre recherche
-            </p>
-          </div>
+          <NoResultsCard
+            onModifySearch={() => {
+              drawerRef.current?.openDrawer();
+            }}
+            onResetFilters={resetFilters}
+            activeFilters={getActiveFilters(filters)}
+          />
         )}
       </div>
     </div>

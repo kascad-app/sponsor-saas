@@ -1,6 +1,6 @@
 "use client";
 
-import { Rider } from "@/src/lib/dashboard.lib";
+import { Rider } from "@kascad-app/shared-types";
 import { Button } from "@/src/components/ui/button";
 import {
   Card,
@@ -12,283 +12,532 @@ import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import {
   Heart,
   Settings,
-  UserPlus,
-  MessageCircle,
   Instagram,
   Facebook,
   Twitter,
   Trophy,
+  MapPin,
+  Users,
+  Award,
+  Mail,
+  Youtube,
+  MessageCircle,
+  Gamepad2,
+  Github,
+  Linkedin,
+  Video,
+  Camera,
+  ListPlus,
 } from "lucide-react";
 import Image from "next/image";
 import { useFavorites } from "@/src/contexts/favorites-context";
-import { competitions } from "@/src/lib/competition.lib";
+import { Badge } from "@/src/components/ui/badge";
+import { Skeleton } from "@/src/components/ui/skeleton";
+import { RidersErrorCard } from "@/src/widget/rider/card";
+import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/src/components/ui/dialog";
+import { sendEmail } from "@/src/lib/rider/rider.lib";
+import { toast } from "sonner";
 
-export default function DetailRiderScreen({ rider }: { rider?: Rider }) {
+// Composant de loading
+const RiderDetailSkeleton = () => (
+  <div>
+    <div className="bg-white p-4 flex justify-between items-center">
+      <Skeleton className="h-6 w-20" />
+      <Skeleton className="h-8 w-8" />
+    </div>
+
+    <Skeleton className="w-full h-48" />
+
+    <Card className="m-4 -mt-16 relative z-10">
+      <CardContent className="p-4">
+        <div className="flex justify-between">
+          <div className="flex items-center space-x-4">
+            <Skeleton className="w-20 h-20 rounded-full" />
+            <div>
+              <Skeleton className="h-6 w-32 mb-2" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+          <Skeleton className="h-8 w-8" />
+        </div>
+
+        <Skeleton className="h-16 w-full mt-4" />
+
+        <div className="mt-4 flex space-x-2">
+          <Skeleton className="h-10 flex-1" />
+          <Skeleton className="h-10 flex-1" />
+        </div>
+      </CardContent>
+    </Card>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 m-4">
+      <Skeleton className="h-80" />
+      <Skeleton className="h-80" />
+    </div>
+  </div>
+);
+
+interface DetailRiderScreenProps {
+  rider?: Rider;
+  isLoading?: boolean;
+  error?: Error;
+  onRetry?: () => void;
+}
+
+export default function DetailRiderScreen({
+  rider,
+  isLoading,
+  error,
+  onRetry,
+}: DetailRiderScreenProps) {
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
+
+  // Tous les hooks d'état DOIVENT être en haut
+  const [isClient, setIsClient] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Protection contre l'hydratation
+  if (!isClient) {
+    return <RiderDetailSkeleton />;
+  }
 
   // Fonction pour obtenir l'image de bannière selon le sport
   const getBannerImage = (sport: string) => {
-    switch (sport.toLowerCase()) {
-      case "bmx":
+    switch (sport) {
+      case "BMX":
         return "/bannerBmx.jpg";
-      case "mountain biking":
+      case "VTT":
+      case "VTT de descente":
+      case "Cyclisme":
+      case "Cyclisme sur route":
+      case "Enduro":
+      case "Freeride":
         return "/bannerMountainBike.png";
-      case "skate":
+      case "Skateboard":
+      case "Longboard":
+      case "Roller":
+      case "Trottinette":
         return "/bannerSkate.jpg";
       default:
-        return "/bannerMountainBike.jpg";
+        return "/bannerMountainBike.png";
     }
   };
 
+  // Fonction pour obtenir le nom complet
+  const getFullName = (rider: Rider) => {
+    return `${rider.identity.firstName} ${rider.identity.lastName}`;
+  };
+
+  // Fonction pour obtenir l'âge avec protection hydratation
+  const getAge = (birthDate: Date) => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birth.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
+  };
+
+  const handleSendEmail = () => {
+    if (rider) {
+      sendEmail(rider);
+    }
+    setIsEmailDialogOpen(false);
+  };
+
+  // Configuration des réseaux sociaux
+  const socialNetworkConfig = {
+    instagram: { icon: Instagram, name: "Instagram" },
+    facebook: { icon: Facebook, name: "Facebook" },
+    twitter: { icon: Twitter, name: "Twitter" },
+    youtube: { icon: Youtube, name: "YouTube" },
+    linkedin: { icon: Linkedin, name: "LinkedIn" },
+    github: { icon: Github, name: "GitHub" },
+    tiktok: { icon: Video, name: "TikTok" },
+    snapchat: { icon: Camera, name: "Snapchat" },
+    discord: { icon: MessageCircle, name: "Discord" },
+    telegram: { icon: MessageCircle, name: "Telegram" },
+    whatsapp: { icon: MessageCircle, name: "WhatsApp" },
+    twitch: { icon: Gamepad2, name: "Twitch" },
+  };
+
+  // Fonction pour obtenir les réseaux sociaux
+  const getSocialNetworks = (networks: string[]) => {
+    return networks.map((network) => {
+      const config =
+        socialNetworkConfig[
+          network.toLowerCase() as keyof typeof socialNetworkConfig
+        ];
+      return config || { icon: Users, name: network };
+    });
+  };
+
+  if (isLoading) {
+    return <RiderDetailSkeleton />;
+  }
+
+  if (error) {
+    return <RidersErrorCard onRetry={onRetry || (() => {})} />;
+  }
+
+  if (!rider) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold mb-2">Rider non trouvé</h3>
+          <p className="text-muted-foreground">
+            Ce rider n&apos;existe pas ou n&apos;est plus disponible.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const fullName = getFullName(rider);
+  const age = isClient ? getAge(rider.identity.birthDate) : 0;
+  const socialNetworks = getSocialNetworks(rider.preferences.networks);
+  const primarySport =
+    rider.preferences && rider.preferences.sports.length > 0
+      ? rider.preferences.sports[0].name
+      : "Sport";
+
   return (
     <div>
-      {rider ? (
-        <div>
-          <div className="bg-white p-4 flex justify-between items-center">
-            <h1 className="text-xl font-semibold">Profile</h1>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
-            </Button>
+      <div className="bg-white p-4 flex justify-between items-center">
+        <h1 className="text-xl font-semibold">Profile</h1>
+        <Button variant="ghost" size="icon">
+          <Settings className="h-5 w-5" />
+        </Button>
+      </div>
+
+      {/* Banner Image */}
+      <div className="relative w-full h-48">
+        <Image
+          src={getBannerImage(primarySport)}
+          alt={`${primarySport} banner`}
+          fill
+          style={{ objectFit: "cover" }}
+          priority
+        />
+      </div>
+
+      {/* Profile Info */}
+      <Card className="m-4 -mt-16 relative z-10">
+        <CardContent className="p-4">
+          <div className="flex justify-between">
+            <div className="flex items-center space-x-4">
+              <Avatar className="w-20 h-20 border-4 border-white">
+                <AvatarFallback>
+                  {rider.identity.firstName[0]}
+                  {rider.identity.lastName[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h2 className="text-xl font-bold">{fullName}</h2>
+                <p className="text-sm text-gray-500">
+                  {primarySport} • {age} ans
+                </p>
+                <div className="flex items-center gap-1 mt-1">
+                  <MapPin className="h-3 w-3 text-gray-400" />
+                  <span className="text-xs text-gray-500">
+                    {rider.identity.city}, {rider.identity.country}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  if (isFavorite(rider._id)) {
+                    removeFavorite(rider._id);
+                  } else {
+                    addFavorite(rider._id);
+                  }
+                }}
+              >
+                <Heart
+                  className={`h-4 w-4 ${
+                    isFavorite(rider._id) ? "fill-red-500 text-red-500" : ""
+                  }`}
+                />
+              </Button>
+            </div>
           </div>
 
-          {/* Banner Image */}
-          <div className="relative w-full h-48">
-            <Image
-              src={getBannerImage(rider.sport)}
-              alt={`${rider.sport} banner`}
-              fill
-              style={{ objectFit: "cover" }}
-              priority
-            />
+          {/* Bio */}
+          <p className="mt-4 text-sm">
+            {rider.identity.bio || "Aucune bio disponible pour ce rider."}
+          </p>
+
+          {/* Sports pratiqués */}
+          <div className="mt-3 flex flex-wrap gap-1">
+            {rider.preferences.sports.map((sport, index) => (
+              <Badge key={index} variant="secondary" className="text-xs">
+                {sport.name}
+              </Badge>
+            ))}
           </div>
 
-          {/* Profile Info */}
-          <Card className="m-4 -mt-16 relative z-10">
-            <CardContent className="p-4">
-              <div className="flex justify-between">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="w-20 h-20 border-4 border-white">
-                    <AvatarFallback>
-                      {rider.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                        .substring(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h2 className="text-xl font-bold">{rider.name}</h2>
-                    <p className="text-sm text-gray-500">
-                      {rider.sport} - {rider.level}
-                    </p>
+          {/* Social Media */}
+          {socialNetworks.length > 0 && (
+            <div className="mt-3 flex gap-2">
+              {socialNetworks.map((social, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  title={social.name}
+                >
+                  <social.icon className="h-4 w-4" />
+                </Button>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-4 flex space-x-2">
+            <Dialog
+              open={isEmailDialogOpen}
+              onOpenChange={setIsEmailDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button className="flex-1">
+                  <Mail className="mr-2 h-4 w-4" />
+                  Envoyer un mail
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    Contacter {rider.identity.firstName}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p>
+                    Vous allez envoyer un email à {rider.identifier.email} pour
+                    une proposition de partenariat.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button onClick={handleSendEmail} className="flex-1">
+                      Confirmer l&apos;envoi
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsEmailDialogOpen(false)}
+                    >
+                      Annuler
+                    </Button>
                   </div>
                 </div>
-                <div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => {
-                      if (isFavorite(rider.id)) {
-                        removeFavorite(rider.id);
-                      } else {
-                        console.log("addFavorite", rider.id);
-                        addFavorite(rider.id);
-                      }
-                    }}
+              </DialogContent>
+            </Dialog>
+
+            <Button
+              className="flex-1"
+              variant="outline"
+              onClick={() =>
+                toast.info("Cette fonctionnalité est en cours de développement")
+              }
+            >
+              <ListPlus className="mr-2 h-4 w-4" />
+              Ajouter à une liste
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Cards grid layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 m-4">
+        {/* Rider info card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-md font-medium">Informations</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="flex flex-col gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">
+                  Disponibilité
+                </h3>
+                <p className="mt-1">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      rider.availibility.isAvailable
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
                   >
-                    <Heart
-                      className={`h-4 w-4 ${
-                        isFavorite(rider.id)
-                          ? "fill-red-500 border-red-500"
-                          : ""
-                      }`}
-                    />
-                  </Button>
+                    {rider.availibility.isAvailable
+                      ? "Disponible"
+                      : "Indisponible"}
+                  </span>
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">
+                  Type de contrat souhaité
+                </h3>
+                <p className="mt-1">{rider.availibility.contractType}</p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Âge</h3>
+                <p className="mt-1">{age} ans</p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">
+                  Localisation
+                </h3>
+                <p className="mt-1">
+                  {rider.identity.city}, {rider.identity.country}
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">
+                  Lieu de pratique
+                </h3>
+                <p className="mt-1">{rider.identity.practiceLocation}</p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">
+                  Langues parlées
+                </h3>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {rider.identity.languageSpoken.map((lang, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {lang}
+                    </Badge>
+                  ))}
                 </div>
               </div>
 
-              {/* Description */}
-              <p className="mt-4 text-sm">
-                {rider.description ||
-                  "Aucune description disponible pour ce rider."}
-              </p>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">
+                  Entraînement
+                </h3>
+                {/* <p className="mt-1 text-sm">
+                  {rider.trainingFrequency.sessionsPerWeek} sessions/semaine •{" "}
+                  {rider.trainingFrequency.hoursPerSession}h par session
+                </p> */}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-              {/* Social Media */}
-              {rider.socialMedia &&
-                Object.keys(rider.socialMedia).length > 0 && (
-                  <div className="mt-3 flex gap-2">
-                    {rider.socialMedia.instagram && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                      >
-                        <Instagram className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {rider.socialMedia.facebook && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                      >
-                        <Facebook className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {rider.socialMedia.twitter && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                      >
-                        <Twitter className="h-4 w-4" />
-                      </Button>
+        {/* Performances & Sponsoring */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-md font-medium flex items-center">
+              <Trophy className="h-4 w-4 mr-2" />
+              Performances & Sponsoring
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Podiums</h3>
+                <p className="mt-1 flex items-center">
+                  <Award className="h-4 w-4 mr-2 text-yellow-500" />
+                  {/* {rider.performanceSummary.totalPodiums} podiums */}
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">
+                  Sponsors actuels
+                </h3>
+                <p className="mt-1">
+                  {rider.sponsorSummary.totalSponsors} sponsors
+                </p>
+                {rider.sponsorSummary.currentSponsors.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {rider.sponsorSummary.currentSponsors.map(
+                      (sponsor, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {sponsor}
+                        </Badge>
+                      ),
                     )}
                   </div>
                 )}
-
-              <div className="mt-4 flex space-x-2">
-                <Button className="flex-1">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Follow
-                </Button>
-                <Button variant="outline" className="flex-1">
-                  <MessageCircle className="mr-2 h-4 w-4" /> Message
-                </Button>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Cards grid layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 m-4">
-            {/* Rider info card */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Statut
-                    </h3>
-                    <p className="mt-1">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          rider.status === "active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {rider.status === "active" ? "Actif" : "Inactif"}
-                      </span>
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Date d&apos;inscription
-                    </h3>
-                    <p className="mt-1">
-                      {new Date(rider.joinedDate).toLocaleDateString()}
-                    </p>
-                  </div>
-
-                  {/* Information supplémentaire */}
-                  {rider.age && (
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Âge</h3>
-                      <p className="mt-1">{rider.age} ans</p>
-                    </div>
-                  )}
-
-                  {(rider.country || rider.city) && (
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">
-                        Localisation
-                      </h3>
-                      <p className="mt-1">
-                        {rider.city && rider.country
-                          ? `${rider.city}, ${rider.country}`
-                          : rider.city || rider.country}
-                      </p>
-                    </div>
-                  )}
-
-                  {rider.socialMedia &&
-                    Object.keys(rider.socialMedia).length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-500">
-                          Réseaux sociaux
-                        </h3>
-                        <div className="mt-1 space-y-1">
-                          {rider.socialMedia.instagram && (
-                            <p className="text-sm flex items-center">
-                              <Instagram className="h-3 w-3 mr-2" />
-                              {rider.socialMedia.instagram}
-                            </p>
-                          )}
-                          {rider.socialMedia.facebook && (
-                            <p className="text-sm flex items-center">
-                              <Facebook className="h-3 w-3 mr-2" />
-                              {rider.socialMedia.facebook}
-                            </p>
-                          )}
-                          {rider.socialMedia.twitter && (
-                            <p className="text-sm flex items-center">
-                              <Twitter className="h-3 w-3 mr-2" />
-                              {rider.socialMedia.twitter}
-                            </p>
-                          )}
-                        </div>
-                      </div>
+              {rider.sponsorSummary.wishListSponsors.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Sponsors souhaités
+                  </h3>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {rider.sponsorSummary.wishListSponsors.map(
+                      (sponsor, index) => (
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          {sponsor}
+                        </Badge>
+                      ),
                     )}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              )}
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-md font-medium flex items-center">
-                  <Trophy className="h-4 w-4 mr-2" />
-                  Compétitions Récentes
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <div className="space-y-3">
-                  {competitions.map((competition) => (
-                    <div
-                      key={competition.id}
-                      className="flex items-center gap-3 border-b pb-2 last:border-0"
-                    >
-                      <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                        <Image
-                          src={
-                            competition.logo != null || competition.logo !== ""
-                              ? competition.logo
-                              : "/circle-user-round.svg"
-                          }
-                          alt={competition.name}
-                          width={24}
-                          height={24}
-                        />
-                      </div>
-                      <div className="flex-grow">
-                        <h4 className="text-sm font-medium">
-                          {competition.name}
-                        </h4>
-                        <p className="text-xs text-gray-500">
-                          {competition.date}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+              {rider.nonCompetitionAwards.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Récompenses
+                  </h3>
+                  <div className="mt-2 space-y-2">
+                    {rider.nonCompetitionAwards
+                      .slice(0, 3)
+                      .map((award, index) => (
+                        <div key={index} className="text-sm">
+                          <p className="font-medium">{award.title}</p>
+                          <p className="text-xs text-gray-500">
+                            {award.source} •{" "}
+                            {isClient
+                              ? new Date(award.date).toLocaleDateString()
+                              : ""}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      ) : (
-        <div>Rider non trouvé</div>
-      )}
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

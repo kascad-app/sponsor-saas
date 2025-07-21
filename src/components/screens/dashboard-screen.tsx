@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
-import { DataTableWidget } from "@/src/widgets/data-table-sponsor";
+import { DataTableWidget } from "@/src/widget/data-table/data-table-sponsor";
 import { Rider, riders } from "@/src/lib/dashboard.lib";
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import {

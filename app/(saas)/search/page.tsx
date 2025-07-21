@@ -32,6 +32,8 @@ export default function SearchPage() {
   const drawerRef = useRef<EnhancedFilterDrawerRef>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  console.log("user connectéd", user);
+
   const {
     data: riders,
     error: ridersError,

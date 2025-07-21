@@ -101,7 +101,6 @@ export default function DetailRiderScreen({
 }: DetailRiderScreenProps) {
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
-  // Tous les hooks d'état DOIVENT être en haut
   const [isClient, setIsClient] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [editorState, setEditorState] = useState<SerializedEditorState | null>(
@@ -112,12 +111,10 @@ export default function DetailRiderScreen({
     setIsClient(true);
   }, []);
 
-  // Protection contre l'hydratation
   if (!isClient) {
     return <RiderDetailSkeleton />;
   }
 
-  // Fonction pour créer l'état initial de l'éditeur avec le contenu par défaut
   const getInitialEditorState = (): SerializedEditorState => {
     if (!rider) {
       return {
@@ -212,9 +209,11 @@ Cordialement,`;
     }
 
     return serializedState.root.children
-      .map((node: any) => {
+      .map((node: { type: string; children?: { text?: string }[] }) => {
         if (node.type === "paragraph" && node.children) {
-          return node.children.map((child: any) => child.text || "").join("");
+          return node.children
+            .map((child: { text?: string }) => child.text || "")
+            .join("");
         }
         return "";
       })
@@ -243,7 +242,7 @@ Cordialement,`;
     }
   };
 
-  // Fonction pour obtenir le nom complet
+  // le nom complet
   const getFullName = (rider: Rider) => {
     return `${rider.identity.firstName} ${rider.identity.lastName}`;
   };
@@ -287,26 +286,6 @@ Cordialement,`;
     if (open && !editorState) {
       setEditorState(getInitialEditorState());
     }
-  };
-
-  const getDefaultEmailContent = () => {
-    if (!rider) return "";
-
-    return `Bonjour ${rider.identity.firstName},
-
-Je vous contacte au sujet d'une opportunité de partenariat avec notre marque.
-
-Votre profil ${rider.preferences.sports
-      .map((sport) => sport.name)
-      .join(
-        ", ",
-      )} correspond parfaitement à notre image et nous serions ravis de discuter d'une collaboration.
-
-Pourriez-vous me faire savoir si vous seriez intéressé(e) par un partenariat ?
-
-Je reste à votre disposition pour toute question.
-
-Cordialement,`;
   };
 
   // Configuration des réseaux sociaux

@@ -27,13 +27,14 @@ export function Plugins() {
     if (_floatingAnchorElem !== null) {
       setFloatingAnchorElem(_floatingAnchorElem);
     }
+    console.log("floatingAnchorElem", floatingAnchorElem);
   };
 
   return (
     <div className="relative">
       {/* toolbar plugins */}
       <ToolbarPlugin>
-        {({ blockType }) => (
+        {() => (
           <div className="vertical-align-middle sticky top-0 z-10 flex items-center gap-2 overflow-auto border-b p-2 bg-background">
             {/* Block Format Dropdown */}
             <BlockFormatDropDown>

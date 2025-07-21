@@ -1,6 +1,5 @@
 import { Rider } from "@kascad-app/shared-types";
 
-// Nouvelle fonction pour envoyer un email avec contenu personnalisé
 export const sendCustomEmail = (rider: Rider, customContent: string) => {
   const subject = encodeURIComponent("Prise de contact pour un partenariat");
   const body = encodeURIComponent(customContent);

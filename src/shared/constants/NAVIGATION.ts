@@ -29,7 +29,7 @@ export const NAVIGATION: AppNavigation = {
       icon: House,
     },
     {
-      title: "Find a rider",
+      title: "Scouting",
       url: "/search",
       icon: Search,
     },

@@ -137,7 +137,7 @@ export default function SearchPage() {
   useEffect(() => {
     const urlFilters: Partial<SearchFilters> = {};
 
-    searchParams.forEach((value, key) => {
+    searchParams?.forEach((value, key) => {
       switch (key) {
         case "searchQuery":
         case "minBirthdate":

@@ -28,6 +28,7 @@ import {
   Video,
   Camera,
   ListPlus,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import { useFavorites } from "@/src/contexts/favorites-context";
@@ -42,8 +43,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/src/components/ui/dialog";
-import { sendEmail } from "@/src/lib/rider/rider.lib";
+import { sendCustomEmail } from "@/src/lib/rider/rider.lib";
+import { createDefaultEmailContent } from "@/src/lib/contact/contact.lib";
 import { toast } from "sonner";
+import { Editor } from "@/src/components/blocks/editor-00/editor";
+import { SerializedEditorState } from "lexical";
 
 // Composant de loading
 const RiderDetailSkeleton = () => (
@@ -99,18 +103,111 @@ export default function DetailRiderScreen({
 }: DetailRiderScreenProps) {
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
-  // Tous les hooks d'état DOIVENT être en haut
   const [isClient, setIsClient] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [editorState, setEditorState] = useState<SerializedEditorState | null>(
+    null,
+  );
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Protection contre l'hydratation
   if (!isClient) {
     return <RiderDetailSkeleton />;
   }
+
+  const getInitialEditorState = (): SerializedEditorState => {
+    if (!rider) {
+      return {
+        root: {
+          children: [
+            {
+              children: [
+                {
+                  detail: 0,
+                  format: 0,
+                  mode: "normal",
+                  style: "",
+                  text: "Bonjour,",
+                  type: "text",
+                  version: 1,
+                },
+              ],
+              direction: "ltr",
+              format: "",
+              indent: 0,
+              type: "paragraph",
+              version: 1,
+            },
+          ],
+          direction: "ltr",
+          format: "",
+          indent: 0,
+          type: "root",
+          version: 1,
+        },
+      } as unknown as SerializedEditorState;
+    }
+
+    const defaultContent = createDefaultEmailContent(rider);
+
+    // Créer l'état initial avec le contenu par défaut
+    const paragraphs = defaultContent.split("\n\n").map((paragraph) => ({
+      children: [
+        {
+          detail: 0,
+          format: 0,
+          mode: "normal" as const,
+          style: "",
+          text: paragraph,
+          type: "text" as const,
+          version: 1,
+        },
+      ],
+      direction: "ltr" as const,
+      format: "",
+      indent: 0,
+      type: "paragraph" as const,
+      version: 1,
+    }));
+
+    return {
+      root: {
+        children: paragraphs,
+        direction: "ltr",
+        format: "",
+        indent: 0,
+        type: "root",
+        version: 1,
+      },
+    } as unknown as SerializedEditorState;
+  };
+
+  // Fonction pour extraire le texte du contenu sérialisé
+  const extractTextFromSerializedState = (
+    serializedState: SerializedEditorState,
+  ): string => {
+    if (
+      !serializedState ||
+      !serializedState.root ||
+      !serializedState.root.children
+    ) {
+      return "";
+    }
+
+    return serializedState.root.children
+      .map((node: { type: string; children?: { text?: string }[] }) => {
+        if (node.type === "paragraph" && node.children) {
+          return node.children
+            .map((child: { text?: string }) => child.text || "")
+            .join("");
+        }
+        return "";
+      })
+      .join("\n\n");
+  };
 
   // Fonction pour obtenir l'image de bannière selon le sport
   const getBannerImage = (sport: string) => {
@@ -134,7 +231,7 @@ export default function DetailRiderScreen({
     }
   };
 
-  // Fonction pour obtenir le nom complet
+  // le nom complet
   const getFullName = (rider: Rider) => {
     return `${rider.identity.firstName} ${rider.identity.lastName}`;
   };
@@ -156,11 +253,45 @@ export default function DetailRiderScreen({
     return age;
   };
 
-  const handleSendEmail = () => {
-    if (rider) {
-      sendEmail(rider);
+  const handleSendEmail = async () => {
+    if (!rider || !editorState) {
+      toast.error("Données manquantes pour l'envoi de l'email");
+      return;
     }
-    setIsEmailDialogOpen(false);
+
+    const textContent = extractTextFromSerializedState(editorState);
+
+    if (!textContent.trim()) {
+      toast.error("Veuillez saisir un message avant d'envoyer");
+      return;
+    }
+
+    setIsSendingEmail(true);
+
+    try {
+      await sendCustomEmail(rider, textContent);
+      toast.success("Email envoyé avec succès!");
+      setIsEmailDialogOpen(false);
+      // Réinitialiser l'éditeur
+      setEditorState(null);
+    } catch (error) {
+      console.error("Erreur lors de l'envoi:", error);
+      toast.error(
+        error instanceof Error
+          ? `Erreur lors de l'envoi: ${error.message}`
+          : "Erreur lors de l'envoi de l'email",
+      );
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  // Fonction pour initialiser l'éditeur quand la modale s'ouvre
+  const handleDialogOpen = (open: boolean) => {
+    setIsEmailDialogOpen(open);
+    if (open && !editorState) {
+      setEditorState(getInitialEditorState());
+    }
   };
 
   // Configuration des réseaux sociaux
@@ -317,34 +448,64 @@ export default function DetailRiderScreen({
           )}
 
           <div className="mt-4 flex space-x-2">
-            <Dialog
-              open={isEmailDialogOpen}
-              onOpenChange={setIsEmailDialogOpen}
-            >
+            <Dialog open={isEmailDialogOpen} onOpenChange={handleDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex-1">
+                <Button className="flex-1" disabled={isSendingEmail}>
                   <Mail className="mr-2 h-4 w-4" />
                   Envoyer un mail
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
                 <DialogHeader>
                   <DialogTitle>
                     Contacter {rider.identity.firstName}
                   </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <p>
-                    Vous allez envoyer un email à {rider.identifier.email} pour
-                    une proposition de partenariat.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button onClick={handleSendEmail} className="flex-1">
-                      Confirmer l&apos;envoi
+                <div className="space-y-4 overflow-hidden">
+                  <div className="text-sm text-muted-foreground">
+                    <p>
+                      <strong>À :</strong> {rider.identifier.email}
+                    </p>
+                    <p>
+                      <strong>Objet :</strong> Prise de contact pour un
+                      partenariat
+                    </p>
+                  </div>
+
+                  <div
+                    className="border rounded-lg overflow-hidden"
+                    style={{ minHeight: "300px" }}
+                  >
+                    {editorState && (
+                      <Editor
+                        editorSerializedState={editorState}
+                        onSerializedChange={setEditorState}
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      onClick={handleSendEmail}
+                      className="flex-1"
+                      disabled={isSendingEmail}
+                    >
+                      {isSendingEmail ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Envoi en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="mr-2 h-4 w-4" />
+                          Envoyer l&apos;email
+                        </>
+                      )}
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => setIsEmailDialogOpen(false)}
+                      disabled={isSendingEmail}
                     >
                       Annuler
                     </Button>

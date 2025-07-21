@@ -28,6 +28,7 @@ import {
   Video,
   Camera,
   ListPlus,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import { useFavorites } from "@/src/contexts/favorites-context";
@@ -43,6 +44,7 @@ import {
   DialogTrigger,
 } from "@/src/components/ui/dialog";
 import { sendCustomEmail } from "@/src/lib/rider/rider.lib";
+import { createDefaultEmailContent } from "@/src/lib/contact/contact.lib";
 import { toast } from "sonner";
 import { Editor } from "@/src/components/blocks/editor-00/editor";
 import { SerializedEditorState } from "lexical";
@@ -103,6 +105,7 @@ export default function DetailRiderScreen({
 
   const [isClient, setIsClient] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [editorState, setEditorState] = useState<SerializedEditorState | null>(
     null,
   );
@@ -148,21 +151,7 @@ export default function DetailRiderScreen({
       } as unknown as SerializedEditorState;
     }
 
-    const defaultContent = `Bonjour ${rider.identity.firstName},
-
-Je vous contacte au sujet d'une opportunité de partenariat avec notre marque.
-
-Votre profil ${rider.preferences.sports
-      .map((sport) => sport.name)
-      .join(
-        ", ",
-      )} correspond parfaitement à notre image et nous serions ravis de discuter d'une collaboration.
-
-Pourriez-vous me faire savoir si vous seriez intéressé(e) par un partenariat ?
-
-Je reste à votre disposition pour toute question.
-
-Cordialement,`;
+    const defaultContent = createDefaultEmailContent(rider);
 
     // Créer l'état initial avec le contenu par défaut
     const paragraphs = defaultContent.split("\n\n").map((paragraph) => ({
@@ -264,19 +253,36 @@ Cordialement,`;
     return age;
   };
 
-  const handleSendEmail = () => {
-    if (rider && editorState) {
-      const textContent = extractTextFromSerializedState(editorState);
+  const handleSendEmail = async () => {
+    if (!rider || !editorState) {
+      toast.error("Données manquantes pour l'envoi de l'email");
+      return;
+    }
 
-      if (textContent.trim()) {
-        sendCustomEmail(rider, textContent);
-        toast.success("Email envoyé avec succès!");
-        setIsEmailDialogOpen(false);
-        // Réinitialiser l'éditeur
-        setEditorState(null);
-      } else {
-        toast.error("Veuillez saisir un message avant d'envoyer");
-      }
+    const textContent = extractTextFromSerializedState(editorState);
+
+    if (!textContent.trim()) {
+      toast.error("Veuillez saisir un message avant d'envoyer");
+      return;
+    }
+
+    setIsSendingEmail(true);
+
+    try {
+      await sendCustomEmail(rider, textContent);
+      toast.success("Email envoyé avec succès!");
+      setIsEmailDialogOpen(false);
+      // Réinitialiser l'éditeur
+      setEditorState(null);
+    } catch (error) {
+      console.error("Erreur lors de l'envoi:", error);
+      toast.error(
+        error instanceof Error
+          ? `Erreur lors de l'envoi: ${error.message}`
+          : "Erreur lors de l'envoi de l'email",
+      );
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -444,7 +450,7 @@ Cordialement,`;
           <div className="mt-4 flex space-x-2">
             <Dialog open={isEmailDialogOpen} onOpenChange={handleDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex-1">
+                <Button className="flex-1" disabled={isSendingEmail}>
                   <Mail className="mr-2 h-4 w-4" />
                   Envoyer un mail
                 </Button>
@@ -479,13 +485,27 @@ Cordialement,`;
                   </div>
 
                   <div className="flex gap-2 pt-4">
-                    <Button onClick={handleSendEmail} className="flex-1">
-                      <Mail className="mr-2 h-4 w-4" />
-                      Envoyer l&apos;email
+                    <Button
+                      onClick={handleSendEmail}
+                      className="flex-1"
+                      disabled={isSendingEmail}
+                    >
+                      {isSendingEmail ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Envoi en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="mr-2 h-4 w-4" />
+                          Envoyer l&apos;email
+                        </>
+                      )}
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => setIsEmailDialogOpen(false)}
+                      disabled={isSendingEmail}
                     >
                       Annuler
                     </Button>

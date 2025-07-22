@@ -20,14 +20,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const session = useSession();
   const router = useRouter();
 
-  React.useEffect(() => {
-    if (!session.loggedIn) {
-      router.push(ROUTES.HOMEPAGE);
-    }
-  }, [session.loggedIn, router]);
+  // React.useEffect(() => {
+  //   if (!session.loggedIn) {
+  //     router.push(ROUTES.HOMEPAGE);
+  //   }
+  // }, [session.loggedIn, router]);
 
-  if (!session.loggedIn) {
-    return null;
+  if (!session.loggedIn && !session.loading) {
+    router.push(ROUTES.AUTH.LOGIN);
+    // return null;
   }
 
   return (

@@ -12,7 +12,7 @@ import { SWR_KEY } from "@/src/shared/constants/SWR_KEY";
 
 export function useMe() {
   return useSWR<Sponsor>(SWR_KEY.AUTH.ME, () =>
-    requester().get<Sponsor>(SWR_KEY.AUTH.ME)
+    requester().get<Sponsor>(SWR_KEY.AUTH.ME),
   );
 }
 
@@ -29,7 +29,7 @@ export function useLogin() {
         console.log("success in useLogin");
         mutate(SWR_KEY.AUTH.ME, undefined, true);
       },
-    }
+    },
   );
 }
 
@@ -43,7 +43,7 @@ export function useRegister() {
         console.log("success in useLogin");
         mutate(SWR_KEY.AUTH.ME, undefined, true);
       },
-    }
+    },
   );
 }
 
@@ -58,6 +58,6 @@ export function useLogout() {
         mutate(SWR_KEY.AUTH.LOGIN, undefined, false);
         mutate(SWR_KEY.AUTH.REGISTER, undefined, false);
       },
-    }
+    },
   );
 }

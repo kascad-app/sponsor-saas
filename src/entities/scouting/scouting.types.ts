@@ -1,4 +1,5 @@
 import { Rider } from "@/src/lib/dashboard.lib";
+import { ContractType, SportName } from "@kascad-app/shared-types";
 
 // Filtres de recherche selon les spécifications
 export type SearchFilters = {
@@ -53,15 +54,7 @@ export type SearchParams = SearchFilters & {
 };
 
 export const FILTER_OPTIONS = {
-  sports: [
-    "Mountain Biking",
-    "Road Cycling",
-    "BMX",
-    "Skateboard",
-    "Surf",
-    "Snowboard",
-    "Ski",
-  ],
+  sports: Object.values(SportName),
   countries: [
     "France",
     "États-Unis",
@@ -91,11 +84,5 @@ export const FILTER_OPTIONS = {
     "Twitter",
     "Snapchat",
   ],
-  contractType: [
-    "UGC",
-    "Long terme",
-    "Égérie",
-    "Post sponsorisé",
-    "Story sponsorisée",
-  ],
+  contractType: Object.values(ContractType),
 } as const;

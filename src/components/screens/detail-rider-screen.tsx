@@ -150,6 +150,7 @@ export default function DetailRiderScreen({
     try {
       emailSchema.parse(rider.identifier.email);
     } catch (error) {
+      console.error("L'adresse email du rider n'est pas valide", error);
       toast.error("L'adresse email du rider n'est pas valide");
       return;
     }

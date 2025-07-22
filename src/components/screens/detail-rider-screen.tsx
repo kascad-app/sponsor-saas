@@ -12,28 +12,17 @@ import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import {
   Heart,
   Settings,
-  Instagram,
-  Facebook,
-  Twitter,
   Trophy,
   MapPin,
-  Users,
   Award,
   Mail,
-  Youtube,
-  MessageCircle,
-  Gamepad2,
-  Github,
-  Linkedin,
-  Video,
-  Camera,
   ListPlus,
   Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import { useFavorites } from "@/src/contexts/favorites-context";
 import { Badge } from "@/src/components/ui/badge";
-import { Skeleton } from "@/src/components/ui/skeleton";
+import { RiderDetailSkeleton } from "@/src/lib/rider/rider.skeleton";
 import { RidersErrorCard } from "@/src/widget/rider/card";
 import { useEffect, useState } from "react";
 import {
@@ -43,50 +32,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/src/components/ui/dialog";
-import { sendCustomEmail } from "@/src/lib/rider/rider.lib";
-import { createDefaultEmailContent } from "@/src/lib/contact/contact.lib";
+import {
+  sendCustomEmail,
+  getInitialEditorState,
+} from "@/src/lib/rider/rider.lib";
 import { toast } from "sonner";
 import { Editor } from "@/src/components/blocks/editor-00/editor";
 import { SerializedEditorState } from "lexical";
-
-// Composant de loading
-const RiderDetailSkeleton = () => (
-  <div>
-    <div className="bg-white p-4 flex justify-between items-center">
-      <Skeleton className="h-6 w-20" />
-      <Skeleton className="h-8 w-8" />
-    </div>
-
-    <Skeleton className="w-full h-48" />
-
-    <Card className="m-4 -mt-16 relative z-10">
-      <CardContent className="p-4">
-        <div className="flex justify-between">
-          <div className="flex items-center space-x-4">
-            <Skeleton className="w-20 h-20 rounded-full" />
-            <div>
-              <Skeleton className="h-6 w-32 mb-2" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
-          <Skeleton className="h-8 w-8" />
-        </div>
-
-        <Skeleton className="h-16 w-full mt-4" />
-
-        <div className="mt-4 flex space-x-2">
-          <Skeleton className="h-10 flex-1" />
-          <Skeleton className="h-10 flex-1" />
-        </div>
-      </CardContent>
-    </Card>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 m-4">
-      <Skeleton className="h-80" />
-      <Skeleton className="h-80" />
-    </div>
-  </div>
-);
+import { getSocialNetworks } from "@/src/shared/lib/social-networks-icon";
 
 interface DetailRiderScreenProps {
   rider?: Rider;
@@ -117,73 +70,6 @@ export default function DetailRiderScreen({
   if (!isClient) {
     return <RiderDetailSkeleton />;
   }
-
-  const getInitialEditorState = (): SerializedEditorState => {
-    if (!rider) {
-      return {
-        root: {
-          children: [
-            {
-              children: [
-                {
-                  detail: 0,
-                  format: 0,
-                  mode: "normal",
-                  style: "",
-                  text: "Bonjour,",
-                  type: "text",
-                  version: 1,
-                },
-              ],
-              direction: "ltr",
-              format: "",
-              indent: 0,
-              type: "paragraph",
-              version: 1,
-            },
-          ],
-          direction: "ltr",
-          format: "",
-          indent: 0,
-          type: "root",
-          version: 1,
-        },
-      } as unknown as SerializedEditorState;
-    }
-
-    const defaultContent = createDefaultEmailContent(rider);
-
-    // Créer l'état initial avec le contenu par défaut
-    const paragraphs = defaultContent.split("\n\n").map((paragraph) => ({
-      children: [
-        {
-          detail: 0,
-          format: 0,
-          mode: "normal" as const,
-          style: "",
-          text: paragraph,
-          type: "text" as const,
-          version: 1,
-        },
-      ],
-      direction: "ltr" as const,
-      format: "",
-      indent: 0,
-      type: "paragraph" as const,
-      version: 1,
-    }));
-
-    return {
-      root: {
-        children: paragraphs,
-        direction: "ltr",
-        format: "",
-        indent: 0,
-        type: "root",
-        version: 1,
-      },
-    } as unknown as SerializedEditorState;
-  };
 
   // Fonction pour extraire le texte du contenu sérialisé
   const extractTextFromSerializedState = (
@@ -289,36 +175,9 @@ export default function DetailRiderScreen({
   // Fonction pour initialiser l'éditeur quand la modale s'ouvre
   const handleDialogOpen = (open: boolean) => {
     setIsEmailDialogOpen(open);
-    if (open && !editorState) {
-      setEditorState(getInitialEditorState());
+    if (open && !editorState && rider) {
+      setEditorState(getInitialEditorState(rider));
     }
-  };
-
-  // Configuration des réseaux sociaux
-  const socialNetworkConfig = {
-    instagram: { icon: Instagram, name: "Instagram" },
-    facebook: { icon: Facebook, name: "Facebook" },
-    twitter: { icon: Twitter, name: "Twitter" },
-    youtube: { icon: Youtube, name: "YouTube" },
-    linkedin: { icon: Linkedin, name: "LinkedIn" },
-    github: { icon: Github, name: "GitHub" },
-    tiktok: { icon: Video, name: "TikTok" },
-    snapchat: { icon: Camera, name: "Snapchat" },
-    discord: { icon: MessageCircle, name: "Discord" },
-    telegram: { icon: MessageCircle, name: "Telegram" },
-    whatsapp: { icon: MessageCircle, name: "WhatsApp" },
-    twitch: { icon: Gamepad2, name: "Twitch" },
-  };
-
-  // Fonction pour obtenir les réseaux sociaux
-  const getSocialNetworks = (networks: string[]) => {
-    return networks.map((network) => {
-      const config =
-        socialNetworkConfig[
-          network.toLowerCase() as keyof typeof socialNetworkConfig
-        ];
-      return config || { icon: Users, name: network };
-    });
   };
 
   if (isLoading) {

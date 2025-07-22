@@ -1,4 +1,4 @@
-import { requester } from "../requester/requester";
+import { requester } from "@/src/lib/requester/requester";
 import { Rider } from "@kascad-app/shared-types";
 
 // Types for the Contact API
@@ -46,6 +46,14 @@ export interface SponsorMessagesResponse {
 }
 
 // Contact service functions
+/**
+ * Send an email to a rider
+ * @param rider - The rider to send the email to
+ * @param senderName - The name of the sender
+ * @param subject - The subject of the email
+ * @param message - The content of the email
+ * @returns The contact response
+ */
 export const sendEmailToRider = async (
   rider: Rider,
   senderName: string,

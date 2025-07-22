@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { Editor } from "@/src/components/blocks/editor-00/editor";
 import { SerializedEditorState } from "lexical";
 import { getSocialNetworks } from "@/src/shared/lib/social-networks-icon";
+import { z } from "zod";
 
 interface DetailRiderScreenProps {
   rider?: Rider;
@@ -142,6 +143,14 @@ export default function DetailRiderScreen({
   const handleSendEmail = async () => {
     if (!rider || !editorState) {
       toast.error("Données manquantes pour l'envoi de l'email");
+      return;
+    }
+
+    const emailSchema = z.string().email();
+    try {
+      emailSchema.parse(rider.identifier.email);
+    } catch (error) {
+      toast.error("L'adresse email du rider n'est pas valide");
       return;
     }
 

@@ -6,16 +6,16 @@ import { SerializedEditorState } from "lexical";
 /**
  * Send a custom email to a rider
  * @param rider - The rider to send the email to
+ * @param subject - The subject of the email
  * @param customContent - The content of the email
  * @param senderName - The name of the sender
  */
 export const sendCustomEmail = async (
   rider: Rider,
+  subject: string,
   customContent: string,
   senderName: string = "Kascad Team",
 ): Promise<void> => {
-  const subject = "Prise de contact pour un partenariat";
-
   try {
     await sendEmailToRider(rider, senderName, subject, customContent);
   } catch (error) {

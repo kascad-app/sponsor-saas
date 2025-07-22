@@ -41,6 +41,7 @@ import { Editor } from "@/src/components/blocks/editor-00/editor";
 import { SerializedEditorState } from "lexical";
 import { getSocialNetworks } from "@/src/shared/lib/social-networks-icon";
 import { z } from "zod";
+import { Input } from "@/src/components/ui/input";
 
 interface DetailRiderScreenProps {
   rider?: Rider;
@@ -62,6 +63,9 @@ export default function DetailRiderScreen({
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [editorState, setEditorState] = useState<SerializedEditorState | null>(
     null,
+  );
+  const [emailSubject, setEmailSubject] = useState(
+    "Prise de contact pour un partenariat",
   );
 
   useEffect(() => {
@@ -162,14 +166,21 @@ export default function DetailRiderScreen({
       return;
     }
 
+    // Validation du sujet
+    if (!emailSubject.trim()) {
+      toast.error("Veuillez saisir un objet pour l'email");
+      return;
+    }
+
     setIsSendingEmail(true);
 
     try {
-      await sendCustomEmail(rider, textContent);
+      await sendCustomEmail(rider, emailSubject, textContent);
       toast.success("Email envoyé avec succès!");
       setIsEmailDialogOpen(false);
-      // Réinitialiser l'éditeur
+      // Réinitialiser l'éditeur et le sujet
       setEditorState(null);
+      setEmailSubject("Prise de contact pour un partenariat");
     } catch (error) {
       console.error("Erreur lors de l'envoi:", error);
       toast.error(
@@ -187,6 +198,10 @@ export default function DetailRiderScreen({
     setIsEmailDialogOpen(open);
     if (open && !editorState && rider) {
       setEditorState(getInitialEditorState(rider));
+      // Réinitialiser le sujet si nécessaire
+      if (!emailSubject.trim()) {
+        setEmailSubject("Prise de contact pour un partenariat");
+      }
     }
   };
 
@@ -335,10 +350,23 @@ export default function DetailRiderScreen({
                     <p>
                       <strong>À :</strong> {rider.identifier.email}
                     </p>
-                    <p>
-                      <strong>Objet :</strong> Prise de contact pour un
-                      partenariat
-                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="email-subject"
+                      className="text-sm font-medium"
+                    >
+                      Objet :
+                    </label>
+                    <Input
+                      id="email-subject"
+                      value={emailSubject}
+                      onChange={(e) => setEmailSubject(e.target.value)}
+                      placeholder="Objet de l'email"
+                      disabled={isSendingEmail}
+                      className="w-full"
+                    />
                   </div>
 
                   <div

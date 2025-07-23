@@ -11,8 +11,16 @@ import { sendSWRRequest } from "@/src/lib/swr/use-swr";
 import { SWR_KEY } from "@/src/shared/constants/SWR_KEY";
 
 export function useMe() {
-  return useSWR<Sponsor>(SWR_KEY.AUTH.ME, () =>
-    requester().get<Sponsor>(SWR_KEY.AUTH.ME),
+  return useSWR<Sponsor>(
+    SWR_KEY.AUTH.ME,
+    () => requester().get<Sponsor>(SWR_KEY.AUTH.ME),
+    {
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+      revalidateOnReconnect: false,
+      refreshInterval: 0,
+      dedupingInterval: 60000,
+    },
   );
 }
 

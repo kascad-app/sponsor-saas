@@ -96,7 +96,7 @@ export const CreateBoostDrawer = ({
 
         <form onSubmit={handleSubmit} className="space-y-6 py-6">
           <div className="space-y-2">
-            <Label htmlFor="title">Titre de l'offre *</Label>
+            <Label htmlFor="title">Titre de l&apos;offre *</Label>
             <Input
               id="title"
               placeholder="Ex: Sponsoring pour événement BMX"

@@ -123,25 +123,25 @@ export function useRejectBoost() {
 }
 
 // Créer un profil custom de rider selon une offre
-export function useCreateCustomProfileRider() {
-  return {
-    createCustomProfile: async (offerId: string, profileData: any) => {
-      try {
-        const endpoint = BOOSTS.CREATE_CUSTOM_PROFIL_RIDER.replace(
-          ":offerId",
-          offerId,
-        );
-        const response = await requester().post(endpoint, {
-          data: profileData,
-        });
-        return response;
-      } catch (error) {
-        console.error("Erreur lors de la création du profil custom:", error);
-        throw error;
-      }
-    },
-  };
-}
+// export function useCreateCustomProfileRider() {
+//   return {
+//     createCustomProfile: async (offerId: string, profileData: any) => {
+//       try {
+//         const endpoint = BOOSTS.CREATE_CUSTOM_PROFIL_RIDER.replace(
+//           ":offerId",
+//           offerId,
+//         );
+//         const response = await requester().post(endpoint, {
+//           data: profileData,
+//         });
+//         return response;
+//       } catch (error) {
+//         console.error("Erreur lors de la création du profil custom:", error);
+//         throw error;
+//       }
+//     },
+//   };
+// }
 
 // Hook pour les actions sur les boosts (combiné pour faciliter l'utilisation)
 export function useBoostActions() {
@@ -150,7 +150,7 @@ export function useBoostActions() {
   const { deleteBoost } = useDeleteBoost();
   const { acceptBoost } = useAcceptBoost();
   const { rejectBoost } = useRejectBoost();
-  const { createCustomProfile } = useCreateCustomProfileRider();
+  // const { createCustomProfile } = useCreateCustomProfileRider();
 
   return {
     createBoost,
@@ -158,6 +158,6 @@ export function useBoostActions() {
     deleteBoost,
     acceptBoost,
     rejectBoost,
-    createCustomProfile,
+    // createCustomProfile,
   };
 }

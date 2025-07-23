@@ -5,7 +5,6 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/src/components/ui/button";
 import { EmptyBoostState } from "@/src/widget/boosts/empty-boosts";
-import { BoostCard } from "@/src/widget/boosts/boosts-card";
 import { CreateBoostDrawer } from "@/src/widget/boosts/boost-drawer";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { CreateOfferInput } from "@/src/entities/boosts/boosts.types";
@@ -14,6 +13,8 @@ import {
   useCreateBoost,
 } from "@/src/entities/boosts/boosts.hook";
 import { SkeletonAllBoost } from "@/src/widget/boosts/skeleton-all-boost";
+import { BoostsDataTable } from "@/src/widget/boosts/boosts-data-table";
+import { boostsColumns } from "@/src/widget/boosts/boosts-columns";
 
 export default function BoostPage() {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
@@ -82,27 +83,20 @@ export default function BoostPage() {
             </p>
           )}
         </div>
-        {hasBoosts && (
-          <Button
-            onClick={() => setIsCreateDrawerOpen(true)}
-            className="flex items-center gap-2"
-            disabled={isCreating}
-          >
-            <Plus className="w-4 h-4" />
-            Nouvelle offre
-          </Button>
-        )}
+        <Button
+          onClick={() => setIsCreateDrawerOpen(true)}
+          className="flex items-center gap-2"
+          disabled={isCreating}
+        >
+          <Plus className="w-4 h-4" />
+          Nouvelle offre
+        </Button>
       </div>
 
       {!hasBoosts ? (
         <EmptyBoostState onCreateClick={() => setIsCreateDrawerOpen(true)} />
       ) : (
-        /* Liste des boosts */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {boosts.map((boost) => (
-            <BoostCard key={boost._id} boost={boost} />
-          ))}
-        </div>
+        <BoostsDataTable columns={boostsColumns} data={boosts} />
       )}
 
       {/* Drawer de création */}

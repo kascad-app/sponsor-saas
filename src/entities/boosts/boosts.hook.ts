@@ -1,13 +1,12 @@
 import useSWR, { mutate } from "swr";
 import { requester } from "@/src/lib/requester/requester";
 import { BOOSTS } from "@/src/shared/constants/BOOSTS";
-import { Offer, CreateOfferInput } from "./boosts.types";
+import { Offer, CreateOfferInput, BoostsApiResponse } from "./boosts.types";
 
-// Récupérer tous les boosts/offres
 export function useGetBoosts() {
   const key = BOOSTS.GET_BOOSTS;
-  return useSWR<Offer[]>(key, async () => {
-    const response = await requester().get<Offer[]>(key);
+  return useSWR<BoostsApiResponse>(key, async () => {
+    const response = await requester().get<BoostsApiResponse>(key);
     return response;
   });
 }
@@ -143,7 +142,6 @@ export function useRejectBoost() {
 //   };
 // }
 
-// Hook pour les actions sur les boosts (combiné pour faciliter l'utilisation)
 export function useBoostActions() {
   const { createBoost } = useCreateBoost();
   const { updateBoost } = useUpdateBoost();

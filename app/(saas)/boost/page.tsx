@@ -7,21 +7,22 @@ import { Button } from "@/src/components/ui/button";
 import { EmptyBoostState } from "@/src/widget/boosts/empty-boosts";
 import { BoostCard } from "@/src/widget/boosts/boosts-card";
 import { CreateBoostDrawer } from "@/src/widget/boosts/boost-drawer";
-import { Skeleton } from "@/src/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/src/components/ui/card";
+import { Card, CardContent } from "@/src/components/ui/card";
 import { CreateOfferInput } from "@/src/entities/boosts/boosts.types";
 import {
   useGetBoosts,
   useCreateBoost,
 } from "@/src/entities/boosts/boosts.hook";
+import { SkeletonAllBoost } from "@/src/widget/boosts/skeleton-all-boost";
 
 export default function BoostPage() {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-
-  // Utiliser les hooks pour récupérer et créer les boosts
-  const { data: boosts = [], isLoading, error, mutate } = useGetBoosts();
+  const { data: boostsResponse, isLoading, error, mutate } = useGetBoosts();
   const { createBoost } = useCreateBoost();
+
+  const boosts = boostsResponse?.data || [];
+  const pagination = boostsResponse?.pagination;
 
   const handleCreateBoost = async (newBoostData: CreateOfferInput) => {
     setIsCreating(true);
@@ -39,35 +40,9 @@ export default function BoostPage() {
 
   const hasBoosts = boosts && boosts.length > 0;
 
-  // Affichage du loading state
+  // loading state
   if (isLoading) {
-    return (
-      <div className="container mx-auto py-6">
-        <div className="flex justify-between items-center mb-6">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-10 w-36" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <Skeleton className="h-4 w-1/2" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
+    return <SkeletonAllBoost />;
   }
 
   // Affichage en cas d'erreur
@@ -96,11 +71,17 @@ export default function BoostPage() {
 
   return (
     <div className="container mx-auto py-6">
-      {/* Header avec titre et bouton conditionnel */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Mes offres de sponsoring</h1>
-
-        {/* Bouton en haut à droite quand il y a des boosts */}
+        <div>
+          <h1 className="text-2xl font-bold">Mes offres de sponsoring</h1>
+          {pagination && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {pagination.totalItems} offre
+              {pagination.totalItems > 1 ? "s" : ""} • Page{" "}
+              {pagination.currentPage} sur {pagination.totalPages}
+            </p>
+          )}
+        </div>
         {hasBoosts && (
           <Button
             onClick={() => setIsCreateDrawerOpen(true)}
@@ -113,9 +94,7 @@ export default function BoostPage() {
         )}
       </div>
 
-      {/* Contenu principal */}
       {!hasBoosts ? (
-        /* Empty state avec bouton au centre */
         <EmptyBoostState onCreateClick={() => setIsCreateDrawerOpen(true)} />
       ) : (
         /* Liste des boosts */

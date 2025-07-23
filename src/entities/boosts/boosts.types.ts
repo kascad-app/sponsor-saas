@@ -15,3 +15,16 @@ export type OfferFormData = {
   contractType: string;
   currency: string;
 };
+
+// TODO déplacer dans shared
+export type PaginationInfo = {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+};
+
+export type BoostsApiResponse = {
+  data: Offer[];
+  pagination: PaginationInfo;
+};

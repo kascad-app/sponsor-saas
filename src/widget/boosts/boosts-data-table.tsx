@@ -30,6 +30,7 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Offer } from "@/src/entities/boosts/boosts.types";
 
 interface BoostsDataTableProps {
@@ -51,6 +52,8 @@ export const BoostsDataTable = ({
     pageIndex: 0,
     pageSize: pageSize,
   });
+
+  const router = useRouter();
 
   const table = useReactTable({
     data,
@@ -93,7 +96,10 @@ export const BoostsDataTable = ({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="hover:bg-muted/50"
+                  className="hover:bg-muted/50 cursor-pointer"
+                  onClick={() => {
+                    router.push(`/boost/${row.original._id}`);
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

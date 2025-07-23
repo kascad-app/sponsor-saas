@@ -11,37 +11,7 @@ import {
 } from "@/src/components/ui/dropdown-menu";
 import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
 import { Offer } from "@/src/entities/boosts/boosts.types";
-
-// Fonction pour formater la date
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
-
-const formatBudget = (offer: Offer) => {
-  if (offer.budgetMin && offer.budgetMax) {
-    if (offer.budgetMin === offer.budgetMax) {
-      return `${offer.budgetMin.toLocaleString()}${offer.currency || "€"}`;
-    }
-    return `${offer.budgetMin.toLocaleString()} - ${offer.budgetMax.toLocaleString()}${
-      offer.currency || "€"
-    }`;
-  }
-  if (offer.budgetMin) {
-    return `À partir de ${offer.budgetMin.toLocaleString()}${
-      offer.currency || "€"
-    }`;
-  }
-  if (offer.budgetMax) {
-    return `Jusqu'à ${offer.budgetMax.toLocaleString()}${
-      offer.currency || "€"
-    }`;
-  }
-  return "À discuter";
-};
+import { formatBudget } from "@/src/lib/boosts/boosts";
 
 export const boostsColumns: ColumnDef<Offer>[] = [
   {
@@ -57,11 +27,6 @@ export const boostsColumns: ColumnDef<Offer>[] = [
           <div className="text-xs text-muted-foreground line-clamp-2">
             {offer.description}
           </div>
-          {/* {offer.sponsor?.companyName && (
-            <div className="text-xs text-muted-foreground mt-1">
-              {offer.sponsor.companyName}
-            </div>
-          )} */}
         </div>
       );
     },

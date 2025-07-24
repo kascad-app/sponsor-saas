@@ -11,7 +11,7 @@ export type OfferFormData = {
   description: string;
   budgetMin: string;
   budgetMax: string;
-  sport: string;
+  sports: string[];
   contractType: string;
   currency: string;
 };

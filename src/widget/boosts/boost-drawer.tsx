@@ -19,12 +19,12 @@ import {
 } from "@/src/components/ui/select";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
-import { FILTER_OPTIONS } from "@/src/entities/scouting/scouting.types";
-import { SportName, ContractType, Currency } from "@kascad-app/shared-types";
+import { ContractType, Currency, SportName } from "@kascad-app/shared-types";
 import {
   CreateOfferInput,
   OfferFormData,
 } from "@/src/entities/boosts/boosts.types";
+import { MultiSportSelect } from "./multi-sport-select";
 
 export const CreateBoostDrawer = ({
   open,
@@ -42,7 +42,7 @@ export const CreateBoostDrawer = ({
     description: "",
     budgetMin: "",
     budgetMax: "",
-    sport: "",
+    sports: [],
     contractType: "",
     currency: "",
   });
@@ -52,7 +52,7 @@ export const CreateBoostDrawer = ({
     if (
       formData.title &&
       formData.description &&
-      formData.sport &&
+      formData.sports.length > 0 &&
       formData.contractType &&
       !isCreating
     ) {
@@ -60,7 +60,7 @@ export const CreateBoostDrawer = ({
         title: formData.title,
         description: formData.description,
         contractType: formData.contractType as ContractType,
-        sports: [formData.sport as SportName],
+        sports: formData.sports as SportName[],
         budgetMin: formData.budgetMin
           ? parseInt(formData.budgetMin)
           : undefined,
@@ -76,7 +76,7 @@ export const CreateBoostDrawer = ({
         description: "",
         budgetMin: "",
         budgetMax: "",
-        sport: "",
+        sports: [],
         contractType: "",
         currency: "",
       });
@@ -104,6 +104,7 @@ export const CreateBoostDrawer = ({
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
+              maxLength={100}
               disabled={isCreating}
               required
             />
@@ -118,6 +119,7 @@ export const CreateBoostDrawer = ({
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
+              maxLength={1000}
               disabled={isCreating}
               className="w-full min-h-[100px] px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 border border-input bg-background rounded-md"
               required
@@ -125,26 +127,17 @@ export const CreateBoostDrawer = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sport">Sport *</Label>
-            <Select
-              value={formData.sport}
-              onValueChange={(value) =>
-                setFormData({ ...formData, sport: value })
-              }
+            <Label>
+              Sports *{" "}
+              <span className="text-sm text-muted-foreground">
+                (Sélectionnez un ou plusieurs sports)
+              </span>
+            </Label>
+            <MultiSportSelect
+              selectedSports={formData.sports}
+              onSportsChange={(sports) => setFormData({ ...formData, sports })}
               disabled={isCreating}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionnez un sport" />
-              </SelectTrigger>
-              <SelectContent>
-                {FILTER_OPTIONS.sports.map((sport) => (
-                  <SelectItem key={sport} value={sport}>
-                    {sport}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </div>
 
           <div className="space-y-2">
@@ -181,6 +174,7 @@ export const CreateBoostDrawer = ({
                 onChange={(e) =>
                   setFormData({ ...formData, budgetMin: e.target.value })
                 }
+                maxLength={10}
                 disabled={isCreating}
               />
             </div>
@@ -194,6 +188,7 @@ export const CreateBoostDrawer = ({
                 onChange={(e) =>
                   setFormData({ ...formData, budgetMax: e.target.value })
                 }
+                maxLength={10}
                 disabled={isCreating}
               />
             </div>
@@ -230,7 +225,10 @@ export const CreateBoostDrawer = ({
             >
               Annuler
             </Button>
-            <Button type="submit" disabled={isCreating}>
+            <Button
+              type="submit"
+              disabled={isCreating || formData.sports.length === 0}
+            >
               {isCreating ? "Création..." : "Créer l'offre"}
             </Button>
           </SheetFooter>

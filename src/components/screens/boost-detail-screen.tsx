@@ -65,7 +65,7 @@ export const BoostDetailScreen = ({ boost }: BoostDetailScreenProps) => {
           {/* Description */}
           <Card>
             <CardHeader>
-              <CardTitle>Description de l'offre</CardTitle>
+              <CardTitle>Description de l&lsquo;offre</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground leading-relaxed">
@@ -77,7 +77,7 @@ export const BoostDetailScreen = ({ boost }: BoostDetailScreenProps) => {
           {/* Critères */}
           <Card>
             <CardHeader>
-              <CardTitle>Critères de l'offre</CardTitle>
+              <CardTitle>Critères de l&lsquo;offre</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -147,7 +147,7 @@ export const BoostDetailScreen = ({ boost }: BoostDetailScreenProps) => {
               <div className="space-y-3">
                 <Button className="w-full">Voir les candidatures</Button>
                 <Button variant="outline" className="w-full">
-                  Partager l'offre
+                  Partager l&lsquo;offre
                 </Button>
               </div>
             </CardContent>

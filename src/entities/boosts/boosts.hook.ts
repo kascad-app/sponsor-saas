@@ -13,7 +13,7 @@ export function useGetBoosts() {
 
 // Récupérer un boost spécifique par ID
 export function useGetBoostById(offerId: string | null) {
-  const key = offerId ? `${BOOSTS.GET_BOOSTS}/${offerId}` : null;
+  const key = offerId ? `${BOOSTS.GET_BOOST_BY_ID}/${offerId}` : null;
   return useSWR<Offer>(key, async () => {
     const response = await requester().get<Offer>(key!);
     return response;
@@ -48,7 +48,7 @@ export function useUpdateBoost() {
         const response = await requester().post<Offer>(endpoint, { data });
         // Invalider le cache pour refetch les boosts
         await mutate(BOOSTS.GET_BOOSTS);
-        await mutate(`${BOOSTS.GET_BOOSTS}/${offerId}`);
+        await mutate(`${BOOSTS.GET_BOOST_BY_ID}/${offerId}`);
         return response;
       } catch (error) {
         console.error("Erreur lors de la mise à jour du boost:", error);
@@ -67,7 +67,7 @@ export function useDeleteBoost() {
         await requester().delete(endpoint);
         // Invalider le cache pour refetch les boosts
         await mutate(BOOSTS.GET_BOOSTS);
-        await mutate(`${BOOSTS.GET_BOOSTS}/${offerId}`);
+        await mutate(`${BOOSTS.GET_BOOST_BY_ID}/${offerId}`);
         return true;
       } catch (error) {
         console.error("Erreur lors de la suppression du boost:", error);
@@ -89,7 +89,7 @@ export function useAcceptBoost() {
         const response = await requester().post(endpoint);
         // Invalider le cache pour refetch les boosts
         await mutate(BOOSTS.GET_BOOSTS);
-        await mutate(`${BOOSTS.GET_BOOSTS}/${offerId}`);
+        await mutate(`${BOOSTS.GET_BOOST_BY_ID}/${offerId}`);
         return response;
       } catch (error) {
         console.error("Erreur lors de l'acceptation du boost:", error);
@@ -111,7 +111,7 @@ export function useRejectBoost() {
         const response = await requester().post(endpoint);
         // Invalider le cache pour refetch les boosts
         await mutate(BOOSTS.GET_BOOSTS);
-        await mutate(`${BOOSTS.GET_BOOSTS}/${offerId}`);
+        await mutate(`${BOOSTS.GET_BOOST_BY_ID}/${offerId}`);
         return response;
       } catch (error) {
         console.error("Erreur lors du rejet du boost:", error);

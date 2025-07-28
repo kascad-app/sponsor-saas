@@ -12,27 +12,17 @@ import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import {
   Heart,
   Settings,
-  Instagram,
-  Facebook,
-  Twitter,
   Trophy,
   MapPin,
-  Users,
   Award,
   Mail,
-  Youtube,
-  MessageCircle,
-  Gamepad2,
-  Github,
-  Linkedin,
-  Video,
-  Camera,
   ListPlus,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import { useFavorites } from "@/src/contexts/favorites-context";
 import { Badge } from "@/src/components/ui/badge";
-import { Skeleton } from "@/src/components/ui/skeleton";
+import { RiderDetailSkeleton } from "@/src/lib/rider/rider.skeleton";
 import { RidersErrorCard } from "@/src/widget/rider/card";
 import { useEffect, useState } from "react";
 import {
@@ -42,47 +32,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/src/components/ui/dialog";
-import { sendEmail } from "@/src/lib/rider/rider.lib";
+import {
+  sendCustomEmail,
+  getInitialEditorState,
+} from "@/src/lib/rider/rider.lib";
 import { toast } from "sonner";
-
-// Composant de loading
-const RiderDetailSkeleton = () => (
-  <div>
-    <div className="bg-white p-4 flex justify-between items-center">
-      <Skeleton className="h-6 w-20" />
-      <Skeleton className="h-8 w-8" />
-    </div>
-
-    <Skeleton className="w-full h-48" />
-
-    <Card className="m-4 -mt-16 relative z-10">
-      <CardContent className="p-4">
-        <div className="flex justify-between">
-          <div className="flex items-center space-x-4">
-            <Skeleton className="w-20 h-20 rounded-full" />
-            <div>
-              <Skeleton className="h-6 w-32 mb-2" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
-          <Skeleton className="h-8 w-8" />
-        </div>
-
-        <Skeleton className="h-16 w-full mt-4" />
-
-        <div className="mt-4 flex space-x-2">
-          <Skeleton className="h-10 flex-1" />
-          <Skeleton className="h-10 flex-1" />
-        </div>
-      </CardContent>
-    </Card>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 m-4">
-      <Skeleton className="h-80" />
-      <Skeleton className="h-80" />
-    </div>
-  </div>
-);
+import { Editor } from "@/src/components/blocks/editor-00/editor";
+import { SerializedEditorState } from "lexical";
+import { getSocialNetworks } from "@/src/shared/lib/social-networks-icon";
+import { z } from "zod";
+import { Input } from "@/src/components/ui/input";
 
 interface DetailRiderScreenProps {
   rider?: Rider;
@@ -99,18 +58,47 @@ export default function DetailRiderScreen({
 }: DetailRiderScreenProps) {
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
-  // Tous les hooks d'état DOIVENT être en haut
   const [isClient, setIsClient] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [editorState, setEditorState] = useState<SerializedEditorState | null>(
+    null,
+  );
+  const [emailSubject, setEmailSubject] = useState(
+    "Prise de contact pour un partenariat",
+  );
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Protection contre l'hydratation
   if (!isClient) {
     return <RiderDetailSkeleton />;
   }
+
+  // Fonction pour extraire le texte du contenu sérialisé
+  const extractTextFromSerializedState = (
+    serializedState: SerializedEditorState,
+  ): string => {
+    if (
+      !serializedState ||
+      !serializedState.root ||
+      !serializedState.root.children
+    ) {
+      return "";
+    }
+
+    return serializedState.root.children
+      .map((node: { type: string; children?: { text?: string }[] }) => {
+        if (node.type === "paragraph" && node.children) {
+          return node.children
+            .map((child: { text?: string }) => child.text || "")
+            .join("");
+        }
+        return "";
+      })
+      .join("\n\n");
+  };
 
   // Fonction pour obtenir l'image de bannière selon le sport
   const getBannerImage = (sport: string) => {
@@ -134,7 +122,7 @@ export default function DetailRiderScreen({
     }
   };
 
-  // Fonction pour obtenir le nom complet
+  // le nom complet
   const getFullName = (rider: Rider) => {
     return `${rider.identity.firstName} ${rider.identity.lastName}`;
   };
@@ -156,38 +144,65 @@ export default function DetailRiderScreen({
     return age;
   };
 
-  const handleSendEmail = () => {
-    if (rider) {
-      sendEmail(rider);
+  const handleSendEmail = async () => {
+    if (!rider || !editorState) {
+      toast.error("Données manquantes pour l'envoi de l'email");
+      return;
     }
-    setIsEmailDialogOpen(false);
+
+    const emailSchema = z.string().email();
+    try {
+      emailSchema.parse(rider.identifier.email);
+    } catch (error) {
+      console.error("L'adresse email du rider n'est pas valide", error);
+      toast.error("L'adresse email du rider n'est pas valide");
+      return;
+    }
+
+    const textContent = extractTextFromSerializedState(editorState);
+
+    if (!textContent.trim()) {
+      toast.error("Veuillez saisir un message avant d'envoyer");
+      return;
+    }
+
+    // Validation du sujet
+    if (!emailSubject.trim()) {
+      toast.error("Veuillez saisir un objet pour l'email");
+      return;
+    }
+
+    setIsSendingEmail(true);
+
+    try {
+      await sendCustomEmail(rider, emailSubject, textContent);
+      toast.success("Email envoyé avec succès!");
+      setIsEmailDialogOpen(false);
+      // Réinitialiser l'éditeur et le sujet
+      setEditorState(null);
+      setEmailSubject("Prise de contact pour un partenariat");
+    } catch (error) {
+      console.error("Erreur lors de l'envoi:", error);
+      toast.error(
+        error instanceof Error
+          ? `Erreur lors de l'envoi: ${error.message}`
+          : "Erreur lors de l'envoi de l'email",
+      );
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
-  // Configuration des réseaux sociaux
-  const socialNetworkConfig = {
-    instagram: { icon: Instagram, name: "Instagram" },
-    facebook: { icon: Facebook, name: "Facebook" },
-    twitter: { icon: Twitter, name: "Twitter" },
-    youtube: { icon: Youtube, name: "YouTube" },
-    linkedin: { icon: Linkedin, name: "LinkedIn" },
-    github: { icon: Github, name: "GitHub" },
-    tiktok: { icon: Video, name: "TikTok" },
-    snapchat: { icon: Camera, name: "Snapchat" },
-    discord: { icon: MessageCircle, name: "Discord" },
-    telegram: { icon: MessageCircle, name: "Telegram" },
-    whatsapp: { icon: MessageCircle, name: "WhatsApp" },
-    twitch: { icon: Gamepad2, name: "Twitch" },
-  };
-
-  // Fonction pour obtenir les réseaux sociaux
-  const getSocialNetworks = (networks: string[]) => {
-    return networks.map((network) => {
-      const config =
-        socialNetworkConfig[
-          network.toLowerCase() as keyof typeof socialNetworkConfig
-        ];
-      return config || { icon: Users, name: network };
-    });
+  // Fonction pour initialiser l'éditeur quand la modale s'ouvre
+  const handleDialogOpen = (open: boolean) => {
+    setIsEmailDialogOpen(open);
+    if (open && !editorState && rider) {
+      setEditorState(getInitialEditorState(rider));
+      // Réinitialiser le sujet si nécessaire
+      if (!emailSubject.trim()) {
+        setEmailSubject("Prise de contact pour un partenariat");
+      }
+    }
   };
 
   if (isLoading) {
@@ -317,34 +332,77 @@ export default function DetailRiderScreen({
           )}
 
           <div className="mt-4 flex space-x-2">
-            <Dialog
-              open={isEmailDialogOpen}
-              onOpenChange={setIsEmailDialogOpen}
-            >
+            <Dialog open={isEmailDialogOpen} onOpenChange={handleDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex-1">
+                <Button className="flex-1" disabled={isSendingEmail}>
                   <Mail className="mr-2 h-4 w-4" />
                   Envoyer un mail
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
                 <DialogHeader>
                   <DialogTitle>
                     Contacter {rider.identity.firstName}
                   </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <p>
-                    Vous allez envoyer un email à {rider.identifier.email} pour
-                    une proposition de partenariat.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button onClick={handleSendEmail} className="flex-1">
-                      Confirmer l&apos;envoi
+                <div className="space-y-4 overflow-hidden">
+                  <div className="text-sm text-muted-foreground">
+                    <p>
+                      <strong>À :</strong> {rider.identifier.email}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="email-subject"
+                      className="text-sm font-medium"
+                    >
+                      Objet :
+                    </label>
+                    <Input
+                      id="email-subject"
+                      value={emailSubject}
+                      onChange={(e) => setEmailSubject(e.target.value)}
+                      placeholder="Objet de l'email"
+                      disabled={isSendingEmail}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div
+                    className="border rounded-lg overflow-hidden"
+                    style={{ minHeight: "300px" }}
+                  >
+                    {editorState && (
+                      <Editor
+                        editorSerializedState={editorState}
+                        onSerializedChange={setEditorState}
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      onClick={handleSendEmail}
+                      className="flex-1"
+                      disabled={isSendingEmail}
+                    >
+                      {isSendingEmail ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Envoi en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="mr-2 h-4 w-4" />
+                          Envoyer l&apos;email
+                        </>
+                      )}
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => setIsEmailDialogOpen(false)}
+                      disabled={isSendingEmail}
                     >
                       Annuler
                     </Button>

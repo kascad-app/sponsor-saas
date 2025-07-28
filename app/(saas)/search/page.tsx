@@ -19,11 +19,8 @@ import {
 } from "@/src/lib/scouting/scouting.lib";
 import { useGetRiders } from "@/src/entities/riders/riders.hook";
 import { Skeleton } from "@/src/components/ui/skeleton";
-import {
-  RidersErrorCard,
-  RidersLoadingSkeleton,
-  RiderCard,
-} from "@/src/widget/rider/card";
+import { RidersErrorCard, RiderCard } from "@/src/widget/rider/card";
+import { RidersLoadingSkeleton } from "@/src/lib/rider/all-riders.skeleton";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -139,7 +136,7 @@ export default function SearchPage() {
   useEffect(() => {
     const urlFilters: Partial<SearchFilters> = {};
 
-    searchParams.forEach((value, key) => {
+    searchParams?.forEach((value, key) => {
       switch (key) {
         case "searchQuery":
         case "minBirthdate":

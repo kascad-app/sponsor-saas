@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   ArrowLeft,
   DollarSign,
@@ -20,6 +21,7 @@ import {
 import { Badge } from "@/src/components/ui/badge";
 import { Offer } from "@/src/entities/boosts/boosts.types";
 import { formatDate, formatBudget } from "@/src/lib/boosts/boosts";
+import { DeleteBoostDialog } from "@/src/widget/boosts/delete-boost-dialog";
 
 interface BoostDetailScreenProps {
   boost: Offer;
@@ -27,6 +29,16 @@ interface BoostDetailScreenProps {
 
 export const BoostDetailScreen = ({ boost }: BoostDetailScreenProps) => {
   const router = useRouter();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleDeleteSuccess = () => {
+    router.push("/boost");
+  };
+
+  const handleEdit = () => {
+    // TODO: Implémenter la modification
+    console.log("Modifier l'offre", boost._id);
+  };
 
   return (
     <div className="container mx-auto py-6">
@@ -48,11 +60,16 @@ export const BoostDetailScreen = ({ boost }: BoostDetailScreenProps) => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleEdit}>
             <Edit className="w-4 h-4 mr-2" />
             Modifier
           </Button>
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
             <Trash2 className="w-4 h-4 mr-2" />
             Supprimer
           </Button>
@@ -65,10 +82,10 @@ export const BoostDetailScreen = ({ boost }: BoostDetailScreenProps) => {
           {/* Description */}
           <Card>
             <CardHeader>
-              <CardTitle>Description de l&lsquo;offre</CardTitle>
+              <CardTitle>Description de l&apos;offre</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
                 {boost.description}
               </p>
             </CardContent>
@@ -77,7 +94,7 @@ export const BoostDetailScreen = ({ boost }: BoostDetailScreenProps) => {
           {/* Critères */}
           <Card>
             <CardHeader>
-              <CardTitle>Critères de l&lsquo;offre</CardTitle>
+              <CardTitle>Critères de l&apos;offre</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -147,13 +164,21 @@ export const BoostDetailScreen = ({ boost }: BoostDetailScreenProps) => {
               <div className="space-y-3">
                 <Button className="w-full">Voir les candidatures</Button>
                 <Button variant="outline" className="w-full">
-                  Partager l&lsquo;offre
+                  Partager l&apos;offre
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Modale de suppression */}
+      <DeleteBoostDialog
+        boost={boost}
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onDeleteSuccess={handleDeleteSuccess}
+      />
     </div>
   );
 };

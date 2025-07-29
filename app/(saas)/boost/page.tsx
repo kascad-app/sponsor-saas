@@ -7,20 +7,26 @@ import { Button } from "@/src/components/ui/button";
 import { EmptyBoostState } from "@/src/widget/boosts/empty-boosts";
 import { CreateBoostDrawer } from "@/src/widget/boosts/boost-drawer";
 import { Card, CardContent } from "@/src/components/ui/card";
-import { CreateOfferInput } from "@/src/entities/boosts/boosts.types";
+import { CreateOfferInput, Offer } from "@/src/entities/boosts/boosts.types";
 import {
   useGetBoosts,
   useCreateBoost,
+  useDeleteBoost,
 } from "@/src/entities/boosts/boosts.hook";
 import { SkeletonAllBoost } from "@/src/widget/boosts/skeleton-all-boost";
 import { BoostsDataTable } from "@/src/widget/boosts/boosts-data-table";
-import { boostsColumns } from "@/src/widget/boosts/boosts-columns";
+import { createBoostsColumns } from "@/src/widget/boosts/boosts-columns";
+import { DeleteBoostDialog } from "@/src/widget/boosts/delete-boost-dialog";
 
 export default function BoostPage() {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [offerToDelete, setOfferToDelete] = useState<Offer | null>(null);
+
   const { data: boostsResponse, isLoading, error, mutate } = useGetBoosts();
   const { createBoost } = useCreateBoost();
+  const { deleteBoost } = useDeleteBoost();
 
   const boosts = boostsResponse?.data || [];
   const pagination = boostsResponse?.pagination;
@@ -38,6 +44,30 @@ export default function BoostPage() {
       setIsCreating(false);
     }
   };
+
+  const handleDeleteOffer = (offer: Offer) => {
+    setOfferToDelete(offer);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleEditOffer = (offer: Offer) => {
+    // TODO: Implémenter la modification
+    console.log("Modifier l'offre:", offer._id);
+    toast.info("Fonctionnalité de modification à venir");
+  };
+
+  const handleDeleteSuccess = () => {
+    // Forcer le refresh des données
+    mutate();
+    setOfferToDelete(null);
+    setDeleteDialogOpen(false);
+  };
+
+  // Créer les colonnes avec les callbacks
+  const columns = createBoostsColumns({
+    onDelete: handleDeleteOffer,
+    onEdit: handleEditOffer,
+  });
 
   const hasBoosts = boosts && boosts.length > 0;
 
@@ -96,7 +126,12 @@ export default function BoostPage() {
       {!hasBoosts ? (
         <EmptyBoostState onCreateClick={() => setIsCreateDrawerOpen(true)} />
       ) : (
-        <BoostsDataTable columns={boostsColumns} data={boosts} />
+        <BoostsDataTable
+          columns={columns}
+          data={boosts}
+          onDelete={handleDeleteOffer}
+          onEdit={handleEditOffer}
+        />
       )}
 
       {/* Drawer de création */}
@@ -110,6 +145,16 @@ export default function BoostPage() {
         onCreateBoost={handleCreateBoost}
         isCreating={isCreating}
       />
+
+      {/* Dialog de suppression */}
+      {offerToDelete && (
+        <DeleteBoostDialog
+          boost={offerToDelete}
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onDeleteSuccess={handleDeleteSuccess}
+        />
+      )}
     </div>
   );
 }

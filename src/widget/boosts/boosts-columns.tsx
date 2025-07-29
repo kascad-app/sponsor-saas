@@ -7,13 +7,22 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
 import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
 import { Offer } from "@/src/entities/boosts/boosts.types";
-import { formatBudget } from "@/src/lib/boosts/boosts";
+import { formatDate, formatBudget } from "@/src/lib/boosts/boosts";
 
-export const boostsColumns: ColumnDef<Offer>[] = [
+interface BoostsColumnsProps {
+  onDelete?: (offer: Offer) => void;
+  onEdit?: (offer: Offer) => void;
+}
+
+export const createBoostsColumns = ({
+  onDelete,
+  onEdit,
+}: BoostsColumnsProps = {}): ColumnDef<Offer>[] => [
   {
     accessorKey: "title",
     header: "Offres",
@@ -73,40 +82,77 @@ export const boostsColumns: ColumnDef<Offer>[] = [
     ),
   },
   {
+    accessorKey: "createdAt",
+    header: "Créée le",
+    cell: ({ row }) => (
+      <div className="text-sm text-muted-foreground">
+        {formatDate(new Date(row.original.createdAt).toISOString())}
+      </div>
+    ),
+  },
+  {
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
       const offer = row.original;
 
+      const handleAction = (action: () => void, event: React.MouseEvent) => {
+        event.stopPropagation(); // Empêche la navigation vers le détail
+        action();
+      };
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              onClick={(e) => e.stopPropagation()} // Empêche la navigation
+            >
               <span className="sr-only">Ouvrir le menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => console.log("Voir", offer._id)}>
+            <DropdownMenuItem
+              onClick={(e) =>
+                handleAction(() => {
+                  // Navigation vers le détail (comportement par défaut)
+                  window.location.href = `/boost/${offer._id}`;
+                }, e)
+              }
+            >
               <Eye className="mr-2 h-4 w-4" />
-              Voir
+              Voir les détails
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => console.log("Modifier", offer._id)}
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              Modifier
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => console.log("Supprimer", offer._id)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Supprimer
-            </DropdownMenuItem>
+
+            {onEdit && (
+              <DropdownMenuItem
+                onClick={(e) => handleAction(() => onEdit(offer), e)}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Modifier
+              </DropdownMenuItem>
+            )}
+
+            {onDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={(e) => handleAction(() => onDelete(offer), e)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Supprimer
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
     },
   },
 ];
+
+// Export de l'ancienne fonction pour la compatibilité
+export const boostsColumns = createBoostsColumns();

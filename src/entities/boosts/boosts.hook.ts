@@ -64,13 +64,26 @@ export function useDeleteBoost() {
     deleteBoost: async (offerId: string) => {
       try {
         const endpoint = BOOSTS.DELETE_BOOST.replace(":offerId", offerId);
-        await requester().delete(endpoint);
+        await requester().delete(endpoint, {
+          data: {},
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        // Déboguer les clés utilisées
+        const boostsKey = BOOSTS.GET_BOOSTS;
+        const boostByIdKey = `${BOOSTS.GET_BOOST_BY_ID}/${offerId}`;
+
         // Invalider le cache pour refetch les boosts
-        await mutate(BOOSTS.GET_BOOSTS);
-        await mutate(`${BOOSTS.GET_BOOST_BY_ID}/${offerId}`);
+        await mutate(boostsKey);
+        await mutate(boostByIdKey);
+
+        console.log("🔄 Invalidation terminée");
+
         return true;
       } catch (error) {
-        console.error("Erreur lors de la suppression du boost:", error);
+        console.error("❌ Erreur lors de la suppression du boost:", error);
         throw error;
       }
     },

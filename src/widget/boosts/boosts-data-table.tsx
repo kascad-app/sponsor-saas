@@ -39,6 +39,8 @@ interface BoostsDataTableProps {
   pageSize?: number;
   pageSizeOptions?: number[];
   showPageSizeOptions?: boolean;
+  onDelete?: (offer: Offer) => void;
+  onEdit?: (offer: Offer) => void;
 }
 
 export const BoostsDataTable = ({
@@ -47,6 +49,8 @@ export const BoostsDataTable = ({
   pageSize = 10,
   pageSizeOptions = [5, 10, 20, 50],
   showPageSizeOptions = true,
+  onDelete,
+  onEdit,
 }: BoostsDataTableProps) => {
   const [pagination, setPagination] = useState({
     pageIndex: 0,

@@ -45,13 +45,14 @@ export function useUpdateBoost() {
     updateBoost: async (offerId: string, data: Partial<CreateOfferInput>) => {
       try {
         const endpoint = BOOSTS.PATCH_BOOST.replace(":offerId", offerId);
-        const response = await requester().post<Offer>(endpoint, { data });
+        const response = await requester().put<Offer>(endpoint, { data });
+
         // Invalider le cache pour refetch les boosts
         await mutate(BOOSTS.GET_BOOSTS);
         await mutate(`${BOOSTS.GET_BOOST_BY_ID}/${offerId}`);
         return response;
       } catch (error) {
-        console.error("Erreur lors de la mise à jour du boost:", error);
+        console.error("❌ Erreur lors de la mise à jour du boost:", error);
         throw error;
       }
     },

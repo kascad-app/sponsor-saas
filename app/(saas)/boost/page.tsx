@@ -12,21 +12,27 @@ import {
   useGetBoosts,
   useCreateBoost,
   useDeleteBoost,
+  useUpdateBoost,
 } from "@/src/entities/boosts/boosts.hook";
 import { SkeletonAllBoost } from "@/src/widget/boosts/skeleton-all-boost";
 import { BoostsDataTable } from "@/src/widget/boosts/boosts-data-table";
 import { createBoostsColumns } from "@/src/widget/boosts/boosts-columns";
 import { DeleteBoostDialog } from "@/src/widget/boosts/delete-boost-dialog";
+import { EditBoostDrawer } from "@/src/widget/boosts/edit-boost-drawer";
 
 export default function BoostPage() {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [offerToDelete, setOfferToDelete] = useState<Offer | null>(null);
+  const [offerToEdit, setOfferToEdit] = useState<Offer | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const { data: boostsResponse, isLoading, error, mutate } = useGetBoosts();
   const { createBoost } = useCreateBoost();
   const { deleteBoost } = useDeleteBoost();
+  const { updateBoost } = useUpdateBoost();
 
   const boosts = boostsResponse?.data || [];
   const pagination = boostsResponse?.pagination;
@@ -51,9 +57,30 @@ export default function BoostPage() {
   };
 
   const handleEditOffer = (offer: Offer) => {
-    // TODO: Implémenter la modification
-    console.log("Modifier l'offre:", offer._id);
-    toast.info("Fonctionnalité de modification à venir");
+    setOfferToEdit(offer);
+    setEditDrawerOpen(true);
+  };
+
+  const handleEditBoost = async (
+    boostId: string,
+    data: Partial<CreateOfferInput>,
+  ) => {
+    setIsUpdating(true);
+    try {
+      await updateBoost(boostId, data);
+      toast.success("Offre modifiée avec succès !");
+      setEditDrawerOpen(false);
+      setOfferToEdit(null);
+      // Forcer le refresh des données
+      mutate();
+    } catch (error) {
+      console.error("Erreur lors de la modification:", error);
+      toast.error(
+        "Erreur lors de la modification de l'offre. Veuillez réessayer.",
+      );
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleDeleteSuccess = () => {
@@ -145,6 +172,17 @@ export default function BoostPage() {
         onCreateBoost={handleCreateBoost}
         isCreating={isCreating}
       />
+
+      {/* Drawer de modification */}
+      {offerToEdit && (
+        <EditBoostDrawer
+          boost={offerToEdit}
+          open={editDrawerOpen}
+          onOpenChange={setEditDrawerOpen}
+          onEditBoost={handleEditBoost}
+          isEditing={isUpdating}
+        />
+      )}
 
       {/* Dialog de suppression */}
       {offerToDelete && (

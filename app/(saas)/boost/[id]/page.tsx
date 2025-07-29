@@ -19,6 +19,10 @@ export default function BoostDetailPage({ params }: BoostDetailPageProps) {
 
   const { data: boost, isLoading, error, mutate } = useGetBoostById(id);
 
+  const handleBoostUpdated = () => {
+    mutate();
+  };
+
   if (isLoading) {
     return <SkeletonBoostDetail />;
   }
@@ -63,5 +67,7 @@ export default function BoostDetailPage({ params }: BoostDetailPageProps) {
     );
   }
 
-  return <BoostDetailScreen boost={boost} />;
+  return (
+    <BoostDetailScreen boost={boost} onBoostUpdated={handleBoostUpdated} />
+  );
 }

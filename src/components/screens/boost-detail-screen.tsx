@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/src/components/ui/button";
 import {
   Card,
@@ -19,25 +20,50 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 import { Badge } from "@/src/components/ui/badge";
-import { Offer } from "@/src/entities/boosts/boosts.types";
+import { Offer, CreateOfferInput } from "@/src/entities/boosts/boosts.types";
 import { formatDate, formatBudget } from "@/src/lib/boosts/boosts";
 import { DeleteBoostDialog } from "@/src/widget/boosts/delete-boost-dialog";
+import { EditBoostDrawer } from "@/src/widget/boosts/edit-boost-drawer";
+import { useUpdateBoost } from "@/src/entities/boosts/boosts.hook";
 
 interface BoostDetailScreenProps {
   boost: Offer;
+  onBoostUpdated?: () => void;
 }
 
-export const BoostDetailScreen = ({ boost }: BoostDetailScreenProps) => {
+export const BoostDetailScreen = ({
+  boost,
+  onBoostUpdated,
+}: BoostDetailScreenProps) => {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
+  const [showEditDrawer, setShowEditDrawer] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { updateBoost } = useUpdateBoost();
   const handleDeleteSuccess = () => {
     router.push("/boost");
   };
 
-  const handleEdit = () => {
-    // TODO: Implémenter la modification
-    console.log("Modifier l'offre", boost._id);
+  const handleEditBoost = async (
+    boostId: string,
+    data: Partial<CreateOfferInput>,
+  ) => {
+    setIsUpdating(true);
+    try {
+      await updateBoost(boostId, data);
+      toast.success("Offre modifiée avec succès !");
+      setShowEditDrawer(false);
+      if (onBoostUpdated) {
+        onBoostUpdated();
+      }
+    } catch (error) {
+      console.error("Erreur lors de la modification:", error);
+      toast.error(
+        "Erreur lors de la modification de l'offre. Veuillez réessayer.",
+      );
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -60,7 +86,12 @@ export const BoostDetailScreen = ({ boost }: BoostDetailScreenProps) => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleEdit}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEditDrawer(true)}
+            disabled={isUpdating}
+          >
             <Edit className="w-4 h-4 mr-2" />
             Modifier
           </Button>
@@ -178,6 +209,15 @@ export const BoostDetailScreen = ({ boost }: BoostDetailScreenProps) => {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onDeleteSuccess={handleDeleteSuccess}
+      />
+
+      {/* Drawer de modification */}
+      <EditBoostDrawer
+        boost={boost}
+        open={showEditDrawer}
+        onOpenChange={setShowEditDrawer}
+        onEditBoost={handleEditBoost}
+        isEditing={isUpdating}
       />
     </div>
   );

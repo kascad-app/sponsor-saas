@@ -1,6 +1,7 @@
 import { count } from "console";
 
 export const user = {
+  id: 1,
   firstname: "pipi",
   lastname: "caca",
   email: "pipi-caca@gmail.com",

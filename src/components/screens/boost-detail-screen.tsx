@@ -188,18 +188,6 @@ export const BoostDetailScreen = ({
               </div>
             </CardContent>
           </Card>
-
-          {/* Actions */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                <Button className="w-full">Voir les candidatures</Button>
-                <Button variant="outline" className="w-full">
-                  Partager l&apos;offre
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 

@@ -16,6 +16,33 @@ export type OfferFormData = {
   currency: string;
 };
 
+export type OfferApplication = {
+  _id: string;
+  offerId: string;
+  riderId: string;
+  rider: {
+    _id: string;
+    identifier: {
+      firstName: string;
+      lastName: string;
+      slug: string;
+    };
+    identity: {
+      profilePicture?: string;
+      country: string;
+    };
+    preferences: {
+      networks: Array<{
+        platform: string;
+        followers: number;
+      }>;
+    };
+  };
+  status: "pending" | "accepted" | "rejected";
+  appliedAt: string;
+  message?: string;
+};
+
 // TODO déplacer dans shared
 export type PaginationInfo = {
   currentPage: number;

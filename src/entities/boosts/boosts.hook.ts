@@ -1,7 +1,12 @@
 import useSWR, { mutate } from "swr";
 import { requester } from "@/src/lib/requester/requester";
 import { BOOSTS } from "@/src/shared/constants/BOOSTS";
-import { Offer, CreateOfferInput, BoostsApiResponse } from "./boosts.types";
+import {
+  Offer,
+  CreateOfferInput,
+  BoostsApiResponse,
+  OfferApplication,
+} from "./boosts.types";
 
 export function useGetBoosts() {
   const key = BOOSTS.GET_BOOSTS;
@@ -135,26 +140,30 @@ export function useRejectBoost() {
   };
 }
 
-// Créer un profil custom de rider selon une offre
-// export function useCreateCustomProfileRider() {
-//   return {
-//     createCustomProfile: async (offerId: string, profileData: any) => {
-//       try {
-//         const endpoint = BOOSTS.CREATE_CUSTOM_PROFIL_RIDER.replace(
-//           ":offerId",
-//           offerId,
-//         );
-//         const response = await requester().post(endpoint, {
-//           data: profileData,
-//         });
-//         return response;
-//       } catch (error) {
-//         console.error("Erreur lors de la création du profil custom:", error);
-//         throw error;
-//       }
-//     },
-//   };
-// }
+export function useBoostApplication() {
+  return {
+    boostApplication: async (offerId: string, riderId: string) => {
+      try {
+        const endpoint = BOOSTS.BOOST_APPLICATION.replace(":offerId", offerId);
+        const response = await requester().post(endpoint);
+        return response;
+      } catch (error) {
+        console.error("Erreur lors de l'application du boost:", error);
+        throw error;
+      }
+    },
+  };
+}
+
+export function useGetOfferApplications(offerId: string | null) {
+  const key = offerId ? `/offers/${offerId}/applications` : null;
+  return useSWR<OfferApplication[]>(key, async () => {
+    const response = await requester().get<OfferApplication[]>(key!);
+    return response;
+  });
+}
+
+// ... existing code ...
 
 export function useBoostActions() {
   const { createBoost } = useCreateBoost();
@@ -162,7 +171,7 @@ export function useBoostActions() {
   const { deleteBoost } = useDeleteBoost();
   const { acceptBoost } = useAcceptBoost();
   const { rejectBoost } = useRejectBoost();
-  // const { createCustomProfile } = useCreateCustomProfileRider();
+  const { boostApplication } = useBoostApplication();
 
   return {
     createBoost,
@@ -170,6 +179,6 @@ export function useBoostActions() {
     deleteBoost,
     acceptBoost,
     rejectBoost,
-    // createCustomProfile,
+    boostApplication,
   };
 }

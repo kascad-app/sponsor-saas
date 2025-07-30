@@ -4,6 +4,7 @@ import "./globals.css";
 import { FavoritesProvider } from "@/src/contexts/favorites-context";
 import { ThemeProvider } from "@/src/components/layouts/theme-provider";
 import { Toaster } from "@/src/components/ui/sonner";
+import SWRProvider from "@/src/lib/swr-config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,8 +37,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <FavoritesProvider>{children}</FavoritesProvider>
-          <Toaster richColors position="top-right" />
+          <SWRProvider>
+            <FavoritesProvider>{children}</FavoritesProvider>
+            <Toaster richColors position="top-right" />
+          </SWRProvider>
         </ThemeProvider>
       </body>
     </html>

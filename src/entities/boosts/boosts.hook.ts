@@ -132,10 +132,14 @@ export function useRejectBoost() {
 
 export function useBoostApplication() {
   return {
-    boostApplication: async (offerId: string, riderId: string) => {
+    boostApplication: async (offerId: string) => {
       try {
         const endpoint = BOOSTS.BOOST_APPLICATION.replace(":offerId", offerId);
-        const response = await requester().post(endpoint);
+        const response = await requester().post(endpoint, {
+          data: {
+            offerId,
+          },
+        });
         return response;
       } catch (error) {
         console.error("Erreur lors de l'application du boost:", error);

@@ -11,7 +11,6 @@ import { CreateOfferInput, Offer } from "@/src/entities/boosts/boosts.types";
 import {
   useGetBoosts,
   useCreateBoost,
-  useDeleteBoost,
   useUpdateBoost,
 } from "@/src/entities/boosts/boosts.hook";
 import { SkeletonAllBoost } from "@/src/widget/boosts/skeleton-all-boost";
@@ -31,7 +30,6 @@ export default function BoostPage() {
 
   const { data: boostsResponse, isLoading, error, mutate } = useGetBoosts();
   const { createBoost } = useCreateBoost();
-  const { deleteBoost } = useDeleteBoost();
   const { updateBoost } = useUpdateBoost();
 
   const boosts = boostsResponse?.data || [];

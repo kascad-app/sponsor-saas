@@ -121,7 +121,7 @@ export function OfferApplications({
           <Users className="w-12 h-12 text-muted-foreground mb-4" />
           <div className="text-lg font-medium mb-2">Aucune candidature</div>
           <p className="text-muted-foreground">
-            Cette offre n'a pas encore reçu de candidatures.
+            Cette offre n&apos;a pas encore reçu de candidatures.
           </p>
         </CardContent>
       </Card>

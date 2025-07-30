@@ -13,8 +13,16 @@ import { USER_API_ENDPOINT } from "@/src/shared/constants/USER";
 import useSession from "@/src/shared/api/use-session";
 
 export function useMe() {
-  return useSWR<Sponsor>(SWR_KEY.AUTH.ME, () =>
-    requester().get<Sponsor>(SWR_KEY.AUTH.ME),
+  return useSWR<Sponsor>(
+    SWR_KEY.AUTH.ME,
+    () => requester().get<Sponsor>(SWR_KEY.AUTH.ME),
+    {
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+      revalidateOnReconnect: false,
+      refreshInterval: 0,
+      dedupingInterval: 60000,
+    },
   );
 }
 

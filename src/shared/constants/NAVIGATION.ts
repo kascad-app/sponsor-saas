@@ -1,4 +1,12 @@
-import { House, LifeBuoy, type LucideIcon, Search, Send } from "lucide-react";
+import {
+  House,
+  LifeBuoy,
+  type LucideIcon,
+  Search,
+  Send,
+  File,
+  Heart,
+} from "lucide-react";
 
 type NavItem = {
   title: string;
@@ -21,9 +29,19 @@ export const NAVIGATION: AppNavigation = {
       icon: House,
     },
     {
-      title: "Find a rider",
+      title: "Scouting",
       url: "/search",
       icon: Search,
+    },
+    {
+      title: "Shortlist",
+      url: "/shortlist",
+      icon: File,
+    },
+    {
+      title: "Favorites",
+      url: "/favorites",
+      icon: Heart,
     },
   ],
   secondary: [

@@ -1,6 +1,5 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { user } from "@/src/config/user"
 import {
   BadgeCheck,
   Bell,
@@ -30,13 +29,22 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/src/components/ui/sidebar";
+import { useSession } from "@/src/shared/api";
+import { useLogout } from "@/src/entities/authentication/authentication.hooks";
+import { ROUTES } from "@/src/shared/constants/ROUTES";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
+  const session = useSession(true);
+  const logoutMutation = useLogout();
   const router = useRouter();
-  const username = user.firstname + ' ' + user.lastname;
+
   const handleLogout = () => {
-    console.log("@Logout");
+    if (session.loggedIn) {
+      logoutMutation.trigger().then(() => {
+        router.push(ROUTES.HOMEPAGE);
+      });
+    }
   };
 
   return (
@@ -49,12 +57,24 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={username} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarImage
+                  src={session.user?.avatarUrl}
+                  alt={session.user?.identity.companyName}
+                />
+                <AvatarFallback className="rounded-lg">
+                  {session.user?.identity.companyName
+                    .slice(0, 2)
+                    .toLocaleUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{username}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-semibold">
+                  {session.user?.displayName ??
+                    session.user?.identity.companyName}
+                </span>
+                <span className="truncate text-xs">
+                  {session.user?.identifier.email}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -68,12 +88,24 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={username} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarImage
+                    src={session.user?.avatarUrl}
+                    alt={session.user?.identity.companyName}
+                  />
+                  <AvatarFallback className="rounded-lg">
+                    {session.user?.identity.companyName
+                      .slice(0, 2)
+                      .toLocaleUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{username}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-semibold">
+                    {session.user?.displayName ??
+                      session.user?.identity.companyName}
+                  </span>
+                  <span className="truncate text-xs">
+                    {session.user?.identifier.email}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>

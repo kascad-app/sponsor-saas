@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useGetBoostById } from "@/src/entities/boosts/boosts.hook";
 import { BoostDetailScreen } from "@/src/components/screens/boost-detail-screen";
 import { SkeletonBoostDetail } from "@/src/widget/boosts/skeleton-boost-detail";
@@ -12,6 +12,8 @@ import {
   FileText,
   Users,
   MessageSquare,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -21,7 +23,14 @@ import {
   TabsTrigger,
 } from "@/src/components/ui/tabs";
 import { OfferApplications } from "@/src/widget/boosts/boost-application";
-import { useGetOfferApplications } from "@/src/entities/boosts/boosts.hook";
+import {
+  useGetOfferApplications,
+  useUpdateBoost,
+} from "@/src/entities/boosts/boosts.hook";
+import { DeleteBoostDialog } from "@/src/widget/boosts/delete-boost-dialog";
+import { EditBoostDrawer } from "@/src/widget/boosts/edit-boost-drawer";
+import { CreateOfferInput } from "@/src/entities/boosts/boosts.types";
+import { toast } from "sonner";
 
 interface BoostDetailPageProps {
   params: Promise<{ id: string }>;
@@ -30,6 +39,10 @@ interface BoostDetailPageProps {
 export default function BoostDetailPage({ params }: BoostDetailPageProps) {
   const { id } = use(params);
   const router = useRouter();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDrawer, setShowEditDrawer] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { updateBoost } = useUpdateBoost();
 
   const { data: boost, isLoading, error, mutate } = useGetBoostById(id);
   const {
@@ -44,6 +57,30 @@ export default function BoostDetailPage({ params }: BoostDetailPageProps) {
 
   const handleApplicationUpdate = () => {
     mutateApplications();
+  };
+
+  const handleDeleteSuccess = () => {
+    router.push("/boost");
+  };
+
+  const handleEditBoost = async (
+    boostId: string,
+    data: Partial<CreateOfferInput>,
+  ) => {
+    setIsUpdating(true);
+    try {
+      await updateBoost(boostId, data);
+      toast.success("Offre modifiée avec succès !");
+      setShowEditDrawer(false);
+      handleBoostUpdated();
+    } catch (error) {
+      console.error("Erreur lors de la modification:", error);
+      toast.error(
+        "Erreur lors de la modification de l'offre. Veuillez réessayer.",
+      );
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   if (isLoading) {
@@ -93,23 +130,47 @@ export default function BoostDetailPage({ params }: BoostDetailPageProps) {
   return (
     <div className="container mx-auto py-6">
       {/* Header avec bouton retour */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Retour
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{boost.title}</h1>
-          <p className="text-muted-foreground">
-            {applications?.length || 0} candidature
-            {(applications?.length || 0) > 1 ? "s" : ""} reçue
-            {(applications?.length || 0) > 1 ? "s" : ""}
-          </p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Retour
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">{boost.title}</h1>
+            <p className="text-muted-foreground">
+              {applications?.length || 0} candidature
+              {(applications?.length || 0) > 1 ? "s" : ""} reçue
+              {(applications?.length || 0) > 1 ? "s" : ""}
+            </p>
+          </div>
+        </div>
+
+        {/* Boutons d'action */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEditDrawer(true)}
+            disabled={isUpdating}
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Modifier
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Supprimer
+          </Button>
         </div>
       </div>
 
@@ -157,6 +218,23 @@ export default function BoostDetailPage({ params }: BoostDetailPageProps) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modale de suppression */}
+      <DeleteBoostDialog
+        boost={boost}
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onDeleteSuccess={handleDeleteSuccess}
+      />
+
+      {/* Drawer de modification */}
+      <EditBoostDrawer
+        boost={boost}
+        open={showEditDrawer}
+        onOpenChange={setShowEditDrawer}
+        onEditBoost={handleEditBoost}
+        isEditing={isUpdating}
+      />
     </div>
   );
 }

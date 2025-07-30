@@ -77,16 +77,6 @@ export function useDeleteBoost() {
           },
         });
 
-        // Déboguer les clés utilisées
-        const boostsKey = BOOSTS.GET_BOOSTS;
-        const boostByIdKey = `${BOOSTS.GET_BOOST_BY_ID}/${offerId}`;
-
-        // Invalider le cache pour refetch les boosts
-        await mutate(boostsKey);
-        await mutate(boostByIdKey);
-
-        console.log("🔄 Invalidation terminée");
-
         return true;
       } catch (error) {
         console.error("❌ Erreur lors de la suppression du boost:", error);

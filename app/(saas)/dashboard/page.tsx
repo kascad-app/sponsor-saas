@@ -10,15 +10,12 @@ import { Button } from "@/src/components/ui/button";
 import { Heart, Search, Users, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useFavorites } from "@/src/contexts/favorites-context";
-import {
-  RiderCard,
-  RidersLoadingSkeleton,
-  RidersErrorCard,
-} from "@/src/widget/rider/card";
+import { RiderCard, RidersErrorCard } from "@/src/widget/rider/card";
 import { useGetRiders } from "@/src/entities/riders/riders.hook";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { useMemo, Suspense } from "react";
 import { Rider } from "@kascad-app/shared-types";
+import { RidersLoadingSkeleton } from "@/src/lib/rider/all-riders.skeleton";
 
 // Simuler user connecté replace avec l'auth
 const currentUser = {

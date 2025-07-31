@@ -7,8 +7,10 @@ import {
   Sponsor,
 } from "@kascad-app/shared-types";
 import { requester } from "@/src/lib/requester/requester";
-import { sendSWRRequest } from "@/src/lib/swr/use-swr";
+import { sendSWRRequest, sendSWRUpdate } from "@/src/lib/swr/use-swr";
 import { SWR_KEY } from "@/src/shared/constants/SWR_KEY";
+import { USER_API_ENDPOINT } from "@/src/shared/constants/USER";
+import useSession from "@/src/shared/api/use-session";
 
 export function useMe() {
   return useSWR<Sponsor>(
@@ -67,5 +69,28 @@ export function useLogout() {
         mutate(SWR_KEY.AUTH.REGISTER, undefined, false);
       },
     },
+  );
+}
+
+export function useUpdateUserProfile() {
+  const { user } = useSession();
+  
+  const key = `${USER_API_ENDPOINT}/${user?._id}`;
+
+
+  return useSWRMutation<any, Error, string, Partial<Sponsor>>(
+    key,
+    sendSWRUpdate,
+    {
+      rollbackOnError: true,
+      onError(error) {
+        console.error("Erreur lors de la mise à jour du profil :", error);
+      },
+      onSuccess(data) {
+        console.log("Profil utilisateur mis à jour avec succès :", data);
+        // Revalider les données de l'utilisateur
+        mutate(SWR_KEY.AUTH.ME, undefined, { revalidate: true });
+      },
+    }
   );
 }

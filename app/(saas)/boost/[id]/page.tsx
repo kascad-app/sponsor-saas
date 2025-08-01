@@ -31,6 +31,7 @@ import { DeleteBoostDialog } from "@/src/widget/boosts/delete-boost-dialog";
 import { EditBoostDrawer } from "@/src/widget/boosts/edit-boost-drawer";
 import { CreateOfferInput } from "@/src/entities/boosts/boosts.types";
 import { toast } from "sonner";
+import { BoostMessages } from "@/src/widget/boosts/boost-messages";
 
 interface BoostDetailPageProps {
   params: Promise<{ id: string }>;
@@ -207,15 +208,7 @@ export default function BoostDetailPage({ params }: BoostDetailPageProps) {
         </TabsContent>
 
         <TabsContent value="messages" className="mt-6">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
-              <div className="text-lg font-medium mb-2">Messagerie</div>
-              <p className="text-muted-foreground">
-                La fonctionnalité de messagerie sera bientôt disponible.
-              </p>
-            </CardContent>
-          </Card>
+          <BoostMessages boost={boost} applications={applications} />
         </TabsContent>
       </Tabs>
 

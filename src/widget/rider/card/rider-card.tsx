@@ -20,7 +20,7 @@ export const RiderCard = ({ rider }: { rider: Rider }) => {
         <div className="relative h-40 w-full">
           {rider.avatarUrl ? (
             <Image
-              src={rider.avatarUrl}
+              src={rider.avatarUrl || ""}
               alt={`Avatar de ${rider.identity?.firstName} ${rider.identity?.lastName}`}
               fill
               className="object-cover"

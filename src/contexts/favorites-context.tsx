@@ -7,6 +7,7 @@ type FavoritesContextType = {
   addFavorite: (riderId: string) => void;
   removeFavorite: (riderId: string) => void;
   isFavorite: (riderId: string) => boolean;
+  isHydrated: boolean; // Add this to track hydration state
 };
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(
@@ -27,19 +28,28 @@ export const FavoritesProvider = ({
   children: React.ReactNode;
 }) => {
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false); // Track hydration
 
   // Load favorites from localStorage on mount
   useEffect(() => {
     const storedFavorites = localStorage.getItem("rider-favorites");
     if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites));
+      try {
+        setFavorites(JSON.parse(storedFavorites));
+      } catch (error) {
+        console.error("Error parsing stored favorites:", error);
+        localStorage.removeItem("rider-favorites");
+      }
     }
+    setIsHydrated(true); // Mark as hydrated
   }, []);
 
-  // Save favorites to localStorage when they change
+  // Save favorites to localStorage when they change (only after hydration)
   useEffect(() => {
-    localStorage.setItem("rider-favorites", JSON.stringify(favorites));
-  }, [favorites]);
+    if (isHydrated) {
+      localStorage.setItem("rider-favorites", JSON.stringify(favorites));
+    }
+  }, [favorites, isHydrated]);
 
   const addFavorite = (riderId: string) => {
     setFavorites((prev) => [...prev, riderId]);
@@ -55,7 +65,7 @@ export const FavoritesProvider = ({
 
   return (
     <FavoritesContext.Provider
-      value={{ favorites, addFavorite, removeFavorite, isFavorite }}
+      value={{ favorites, addFavorite, removeFavorite, isFavorite, isHydrated }}
     >
       {children}
     </FavoritesContext.Provider>

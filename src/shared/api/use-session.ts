@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import React from "react";
-
 import { ROUTES } from "../constants/ROUTES";
 import { AuthenticationTypes } from "@/src/entities/authentication";
 import { useMe } from "@/src/entities/authentication/authentication.hooks";
@@ -12,18 +11,11 @@ const useSession = (mustAuth = true): AuthenticationTypes.Session => {
   const router = useRouter();
   const { data: user, mutate, isLoading, isValidating } = useMe();
 
-  const redirectToLogin = React.useCallback(() => {
-    router.push(ROUTES.AUTH.LOGIN);
-  }, [router]);
-
   React.useEffect(() => {
-    console.log("user", user);
-    console.log("isLoading", isLoading);
-    console.log("mustAuth", mustAuth);
     if (mustAuth && !isAuthenticated(user) && !isLoading) {
-      redirectToLogin();
+      router.push(ROUTES.AUTH.LOGIN);
     }
-  }, [mustAuth, user, isLoading, redirectToLogin]);
+  }, [mustAuth, user, isLoading, router.push]);
 
   function isAuthenticated(user: unknown): user is Sponsor {
     return (

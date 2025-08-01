@@ -1,19 +1,24 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { Search } from "lucide-react";
+import { Search, Heart } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/src/components/ui/badge";
 import { Input } from "@/src/components/ui/input";
-import { DataTableWidget } from "@/src/widgets/data-table-sponsor";
+import { Button } from "@/src/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/card";
+import { DataTableWidget } from "@/src/widget/data-table/data-table-sponsor";
 import { Rider, riders } from "@/src/lib/dashboard.lib";
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
 import { useFavorites } from "@/src/contexts/favorites-context";
-import {
-  Filters,
-  useFilters,
-  sports,
-  statuses,
-} from "@/src/components/utils/filters-datatable";
+import { Filters, sports } from "@/src/components/utils/filters-datatable";
+import { useDashboardFilters } from "@/src/components/utils/use-dashboard-filters";
 
 // Define the columns for the DataTable
 const columns: ColumnDef<Rider>[] = [
@@ -95,12 +100,10 @@ export const FavoritesScreen = () => {
     searchQuery,
     setSearchQuery,
     selectedSport,
-    setSelectedSport,
-    selectedStatus,
-    setSelectedStatus,
+    setTempSport,
     hasAnyFilter,
     resetFilters,
-  } = useFilters();
+  } = useDashboardFilters();
 
   // Filter the riders based on search query, selected filters, and favorites
   const filteredRiders = riders.filter((rider) => {
@@ -110,13 +113,9 @@ export const FavoritesScreen = () => {
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesSport =
-      selectedSport === "All Sports" || rider.sport === selectedSport;
-    const matchesStatus =
-      selectedStatus === "All Statuses" ||
-      (selectedStatus === "Active" && rider.status === "active") ||
-      (selectedStatus === "Inactive" && rider.status === "inactive");
+      selectedSport === "Tous les sports" || rider.sport === selectedSport;
 
-    return matchesSearch && matchesSport && matchesStatus;
+    return matchesSearch && matchesSport;
   });
 
   return (
@@ -138,21 +137,42 @@ export const FavoritesScreen = () => {
             </div>
           </div>
 
-          <Filters
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedSport={selectedSport}
-            setSelectedSport={setSelectedSport}
-            selectedStatus={selectedStatus}
-            setSelectedStatus={setSelectedStatus}
-            showSearch={false}
-            sportOptions={sports}
-            statusOptions={statuses}
-            hasAnyFilter={hasAnyFilter}
-            resetFilters={resetFilters}
-          />
+          {favorites.length > 0 && (
+            <Filters
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedSport={selectedSport}
+              setSelectedSport={setTempSport}
+              showSearch={false}
+              sportOptions={sports}
+              hasAnyFilter={hasAnyFilter}
+              resetFilters={resetFilters}
+            />
+          )}
 
-          <DataTableWidget columns={columns} data={filteredRiders} />
+          {filteredRiders.length === 0 ? (
+            <div className="flex items-center justify-center min-h-[400px]">
+              <Card className="w-full max-w-md text-center">
+                <CardHeader>
+                  <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <Heart className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <CardTitle>Aucun rider en favoris</CardTitle>
+                  <CardDescription>
+                    Vous n&apos;avez pas encore ajouté de riders à vos favoris.
+                    Découvrez nos riders et ajoutez-les à vos favoris !
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Link href="/search">
+                    <Button className="w-full">Découvrir les riders</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <DataTableWidget columns={columns} data={filteredRiders} />
+          )}
         </main>
       </div>
     </div>

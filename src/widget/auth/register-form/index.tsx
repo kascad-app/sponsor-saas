@@ -23,8 +23,12 @@ import { Loader2 } from "lucide-react";
 
 const registerFormSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  companyName: z.string().min(2, "Company name must be at least 2 characters"),
+  password: z
+    .string()
+    .min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  companyName: z
+    .string()
+    .min(2, "Le nom de la société doit contenir au moins 2 caractères"),
 });
 
 export const RegisterFormWidget: React.FC = () => {
@@ -48,12 +52,14 @@ export const RegisterFormWidget: React.FC = () => {
         companyName: values.companyName,
       })
       .then(() => {
-        toast.success("Registration successful");
+        toast.success("Votre compte a été créé avec succès");
         router.push(ROUTES.APP.DASHBOARD);
       })
       .catch((err) => {
         console.error(err);
-        toast.error("Registration failed");
+        toast.error(
+          "Une erreur est survenue lors de la création de votre compte, veuillez réessayer",
+        );
       });
   }
 
@@ -64,9 +70,9 @@ export const RegisterFormWidget: React.FC = () => {
         className={cn("flex flex-col gap-6")}
       >
         <div className="flex flex-col items-center gap-2 text-center">
-          <h2 className="text-2xl font-bold">Create your account</h2>
+          <h2 className="text-2xl font-bold">Créer votre compte</h2>
           <p className="text-balance text-sm text-muted-foreground">
-            Enter your details below to create your sponsor account
+            Entrez vos informations ci-dessous pour créer votre compte sponsor
           </p>
         </div>
 
@@ -76,9 +82,9 @@ export const RegisterFormWidget: React.FC = () => {
             name="email"
             render={({ field }) => (
               <FormItem className="grid gap-2">
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Adresse email</FormLabel>
                 <FormControl>
-                  <Input placeholder="email" type="email" {...field} />
+                  <Input placeholder="Adresse email" type="email" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -90,9 +96,13 @@ export const RegisterFormWidget: React.FC = () => {
             name="password"
             render={({ field }) => (
               <FormItem className="grid gap-2">
-                <FormLabel>Password</FormLabel>
+                <FormLabel>Mot de passe</FormLabel>
                 <FormControl>
-                  <Input placeholder="password" type="password" {...field} />
+                  <Input
+                    placeholder="Mot de passe"
+                    type="password"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -104,9 +114,9 @@ export const RegisterFormWidget: React.FC = () => {
             name="companyName"
             render={({ field }) => (
               <FormItem className="grid gap-2">
-                <FormLabel>Company Name</FormLabel>
+                <FormLabel>Nom de la société</FormLabel>
                 <FormControl>
-                  <Input placeholder="company name" {...field} />
+                  <Input placeholder="Nom de la société" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -116,7 +126,7 @@ export const RegisterFormWidget: React.FC = () => {
           {registerMutation.error && (
             <div className="text-sm text-red-500 text-center">
               {registerMutation.error.message ||
-                "An error occurred during registration, please contact support"}
+                "Une erreur est survenue lors de la création de votre compte, veuillez contacter le support"}
             </div>
           )}
 
@@ -128,17 +138,17 @@ export const RegisterFormWidget: React.FC = () => {
             {registerMutation.isMutating ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              "Register"
+              "Créer un compte"
             )}
           </Button>
         </div>
         <div className="text-center text-sm">
-          Already have an account?{" "}
+          Vous avez déjà un compte ?{" "}
           <Link
             href={ROUTES.AUTH.LOGIN}
             className="underline underline-offset-4"
           >
-            Sign in
+            Se connecter
           </Link>
         </div>
       </form>

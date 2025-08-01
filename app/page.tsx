@@ -10,7 +10,7 @@ import { ROUTES } from "@/src/shared/constants/ROUTES";
 import Link from "next/link";
 
 export default function Home() {
-  const session = useSession(false);
+  const session = useSession();
   const loginMutation = useLogin();
   const logoutMutation = useLogout();
 
@@ -34,16 +34,16 @@ export default function Home() {
         onClick={handleLogin}
         disabled={loginMutation.isMutating}
       >
-        {loginMutation.isMutating ? "Logging in..." : "Login sponsor"}
+        {loginMutation.isMutating ? "Connexion..." : "Connexion"}
       </Button>
       <Button
         variant={"outline"}
         onClick={handleLogout}
         disabled={logoutMutation.isMutating}
       >
-        {logoutMutation.isMutating ? "Logging out..." : "Logout sponsor"}
+        {logoutMutation.isMutating ? "Déconnexion..." : "Déconnexion"}
       </Button>
-      {session.loggedIn && <h2>User logged</h2>}
+      {session.loggedIn && <h2>Utilisateur connecté</h2>}
 
       {loginMutation.error && <p>Error: {loginMutation.error.message}</p>}
     </>

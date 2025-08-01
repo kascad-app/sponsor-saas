@@ -6,6 +6,7 @@ import {
   Send,
   File,
   Heart,
+  Award,
 } from "lucide-react";
 
 type NavItem = {
@@ -29,13 +30,18 @@ export const NAVIGATION: AppNavigation = {
       icon: House,
     },
     {
-      title: "Find a rider",
+      title: "Scouting",
       url: "/search",
       icon: Search,
     },
     {
-      title: "My contracts",
-      url: "/contracts",
+      title: "Boost",
+      url: "/boost",
+      icon: Award,
+    },
+    {
+      title: "Shortlist",
+      url: "/shortlist",
       icon: File,
     },
     {

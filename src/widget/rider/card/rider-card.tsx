@@ -14,13 +14,50 @@ import { KascadLogo } from "@/src/shared/ui/Kascad-logo.ui";
 export const RiderCard = ({ rider }: { rider: Rider }) => {
   const { isFavorite } = useFavorites();
 
+  const primarySport =
+    rider.preferences && rider.preferences.sports.length > 0
+      ? rider.preferences.sports[0].name
+      : "Sport";
+
+  const getBannerImage = (sport: string) => {
+    switch (sport) {
+      case "BMX":
+        return "/bannerBmx.jpg";
+      case "VTT":
+      case "VTT de descente":
+      case "Cyclisme":
+      case "Cyclisme sur route":
+      case "Enduro":
+      case "Freeride":
+        return "/bannerMountainBike.png";
+      case "Skateboard":
+      case "Longboard":
+      case "Roller":
+      case "Trottinette":
+        return "/bannerSkate.jpg";
+      default:
+        return "/bannerMountainBike.png";
+    }
+  };
+
+  // Fonction pour obtenir l'URL de l'image de profil
+  const getProfileImageUrl = (rider: Rider) => {
+    if (rider.avatarUrl) {
+      return rider.avatarUrl;
+    }
+    if (rider.images && rider.images.length > 0) {
+      return rider.images[0].url;
+    }
+    return getBannerImage(primarySport);
+  };
+
   return (
     <Link href={`/details-rider/${rider.identifier.slug}`}>
       <Card className="hover:shadow-md transition-shadow overflow-hidden h-full">
         <div className="relative h-40 w-full">
           {rider.avatarUrl ? (
             <Image
-              src={rider.avatarUrl || ""}
+              src={getProfileImageUrl(rider)}
               alt={`Avatar de ${rider.identity?.firstName} ${rider.identity?.lastName}`}
               fill
               className="object-cover"

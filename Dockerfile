@@ -28,6 +28,7 @@ COPY . .
 
  COPY .env .env
 
+ENV NEXT_TELEMETRY_DISABLED 1
 RUN pnpm build
 
 # ---- Production stage ----

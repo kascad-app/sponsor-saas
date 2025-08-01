@@ -149,13 +149,21 @@ export default function DetailRiderScreen({
     return age;
   };
 
+  // Fonction pour obtenir l'URL de l'image de bannière
+  const getBannerImageUrl = (rider: Rider) => {
+    if (rider.images && rider.images.length > 0) {
+      return rider.images[0].url;
+    }
+    return getBannerImage(primarySport);
+  };
+
   // Fonction pour obtenir l'URL de l'image de profil
   const getProfileImageUrl = (rider: Rider) => {
     if (rider.avatarUrl) {
       return rider.avatarUrl;
     }
     if (rider.images && rider.images.length > 0) {
-      return rider.images[0].url; // Accédez à la propriété .url de l'objet Image
+      return rider.images[0].url;
     }
     return getBannerImage(primarySport);
   };
@@ -262,8 +270,12 @@ export default function DetailRiderScreen({
       {/* Banner Image */}
       <div className="relative w-full h-48">
         <Image
-          src={getBannerImage(primarySport)}
-          alt={`${primarySport} banner`}
+          src={getBannerImageUrl(rider)}
+          alt={
+            rider.images && rider.images.length > 0
+              ? `${getFullName(rider)} image`
+              : `${primarySport} banner`
+          }
           fill
           style={{ objectFit: "cover" }}
           priority

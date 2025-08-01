@@ -4,7 +4,6 @@ import {
   type LucideIcon,
   Search,
   Send,
-  File,
   Heart,
   Award,
 } from "lucide-react";
@@ -38,11 +37,6 @@ export const NAVIGATION: AppNavigation = {
       title: "Boost",
       url: "/boost",
       icon: Award,
-    },
-    {
-      title: "Shortlist",
-      url: "/shortlist",
-      icon: File,
     },
     {
       title: "Favorites",

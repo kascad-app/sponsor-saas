@@ -14,44 +14,19 @@ import { KascadLogo } from "@/src/shared/ui/Kascad-logo.ui";
 export const RiderCard = ({ rider }: { rider: Rider }) => {
   const { isFavorite } = useFavorites();
 
-  const getSportImage = (sport: string) => {
-    switch (sport) {
-      case "BMX":
-        return "/bannerBmx.jpg";
-      case "VTT":
-      case "VTT de descente":
-      case "Cyclisme":
-      case "Cyclisme sur route":
-      case "Enduro":
-      case "Freeride":
-        return "/bannerMountainBike.png";
-      case "Skateboard":
-      case "Longboard":
-      case "Roller":
-      case "Trottinette":
-        return "/bannerSkate.jpg";
-      default:
-        return "/bannerMountainBike.png";
-    }
-  };
-
   return (
     <Link href={`/details-rider/${rider.identifier.slug}`}>
       <Card className="hover:shadow-md transition-shadow overflow-hidden h-full">
         <div className="relative h-40 w-full">
-          {rider.preferences && rider.preferences.sports.length > 0 ? (
+          {rider.avatarUrl ? (
             <Image
-              src={getSportImage(
-                rider.preferences.sports.map((sport) => sport.name).join(", "),
-              )}
-              alt={rider.preferences.sports
-                .map((sport) => sport.name)
-                .join(", ")}
+              src={rider.avatarUrl}
+              alt={`Avatar de ${rider.identity?.firstName} ${rider.identity?.lastName}`}
               fill
               className="object-cover"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
               <KascadLogo />
             </div>
           )}

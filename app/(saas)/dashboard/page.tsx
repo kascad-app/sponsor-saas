@@ -17,11 +17,6 @@ import { useMemo, Suspense } from "react";
 import { Rider } from "@kascad-app/shared-types";
 import { RidersLoadingSkeleton } from "@/src/lib/rider/all-riders.skeleton";
 
-// Simuler user connecté replace avec l'auth
-const currentUser = {
-  name: "Lucas Huerta",
-};
-
 // Composant pour les statistiques avec gestion d'erreur
 const DashboardStats = ({
   riders,
@@ -260,9 +255,7 @@ export default function Dashboard() {
     <div className="h-[calc(100vh-4rem)] flex flex-col">
       {/* Header */}
       <div className="flex justify-between items-center pb-4 border-b">
-        <h1 className="text-xl font-semibold">
-          Bienvenu sur Kascad, {currentUser.name}
-        </h1>
+        <h1 className="text-xl font-semibold">Bienvenue sur Kascad !</h1>
         <Link href="/search">
           <Button size="sm" className="flex items-center gap-2">
             <Search className="h-4 w-4" />

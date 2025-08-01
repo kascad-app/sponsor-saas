@@ -132,9 +132,13 @@ export default function BoostPage() {
           <h1 className="text-2xl font-bold">Mes offres de sponsoring</h1>
           {pagination && (
             <p className="text-sm text-muted-foreground mt-1">
-              {pagination.totalItems} offre
-              {pagination.totalItems > 1 ? "s" : ""} • Page{" "}
-              {pagination.currentPage} sur {pagination.totalPages}
+              {pagination.totalItems === 0
+                ? "Créer votre première offre !"
+                : `${pagination.totalItems} offre${
+                    pagination.totalItems > 1 ? "s" : ""
+                  } • Page ${pagination.currentPage} sur ${
+                    pagination.totalPages
+                  }`}
             </p>
           )}
         </div>

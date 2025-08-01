@@ -8,7 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
-import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/src/components/ui/avatar";
 import {
   Heart,
   Settings,
@@ -42,6 +46,7 @@ import { SerializedEditorState } from "lexical";
 import { getSocialNetworks } from "@/src/shared/lib/social-networks-icon";
 import { z } from "zod";
 import { Input } from "@/src/components/ui/input";
+import Link from "next/link";
 
 interface DetailRiderScreenProps {
   rider?: Rider;
@@ -142,6 +147,17 @@ export default function DetailRiderScreen({
     }
 
     return age;
+  };
+
+  // Fonction pour obtenir l'URL de l'image de profil
+  const getProfileImageUrl = (rider: Rider) => {
+    if (rider.avatarUrl) {
+      return rider.avatarUrl;
+    }
+    if (rider.images && rider.images.length > 0) {
+      return rider.images[0].url; // Accédez à la propriété .url de l'objet Image
+    }
+    return getBannerImage(primarySport);
   };
 
   const handleSendEmail = async () => {
@@ -260,6 +276,10 @@ export default function DetailRiderScreen({
           <div className="flex justify-between">
             <div className="flex items-center space-x-4">
               <Avatar className="w-20 h-20 border-4 border-white">
+                <AvatarImage
+                  src={getProfileImageUrl(rider)}
+                  alt={`${fullName} profile picture`}
+                />
                 <AvatarFallback>
                   {rider.identity.firstName[0]}
                   {rider.identity.lastName[0]}
@@ -411,16 +431,15 @@ export default function DetailRiderScreen({
               </DialogContent>
             </Dialog>
 
-            <Button
-              className="flex-1"
-              variant="outline"
-              onClick={() =>
-                toast.info("Cette fonctionnalité est en cours de développement")
-              }
+            <Link
+              href={`https://app.kascad.fr/riders/${rider.identifier.slug}`}
+              target="_blank"
             >
-              <ListPlus className="mr-2 h-4 w-4" />
-              Ajouter à une liste
-            </Button>
+              <Button className="flex-1" variant="outline">
+                <ListPlus className="mr-2 h-4 w-4" />
+                Voir le portfolio
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

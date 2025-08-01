@@ -497,7 +497,9 @@ export default function DetailRiderScreen({
                 <h3 className="text-sm font-medium text-gray-500">
                   Lieu de pratique
                 </h3>
-                <p className="mt-1">{rider.identity.practiceLocation}</p>
+                <p className="mt-1">
+                  {rider.identity.practiceLocation ?? "Non renseigné"}
+                </p>
               </div>
 
               <div>
@@ -517,10 +519,14 @@ export default function DetailRiderScreen({
                 <h3 className="text-sm font-medium text-gray-500">
                   Entraînement
                 </h3>
-                {/* <p className="mt-1 text-sm">
-                  {rider.trainingFrequency.sessionsPerWeek} sessions/semaine •{" "}
-                  {rider.trainingFrequency.hoursPerSession}h par session
-                </p> */}
+                <p className="mt-1 text-sm">
+                  {rider.trainingFrequency?.sessionsPerWeek
+                    ? `${rider.trainingFrequency.sessionsPerWeek} sessions/semaine`
+                    : "Non renseigné"}
+                  {rider.trainingFrequency?.hoursPerSession
+                    ? ` • ${rider.trainingFrequency.hoursPerSession}h par session`
+                    : ""}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -540,7 +546,9 @@ export default function DetailRiderScreen({
                 <h3 className="text-sm font-medium text-gray-500">Podiums</h3>
                 <p className="mt-1 flex items-center">
                   <Award className="h-4 w-4 mr-2 text-yellow-500" />
-                  {/* {rider.performanceSummary.totalPodiums} podiums */}
+                  {rider.performanceSummary.totalPodiums
+                    ? `${rider.performanceSummary.totalPodiums} podiums`
+                    : "N'a pas eu de podium pour le moment"}
                 </p>
               </div>
 
